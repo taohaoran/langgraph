@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "ManagedValue 运行期生命周期",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1180, 620]
+  },
+  "lanes": [
+    { "id": "main", "label": "ManagedValue 主生命周期" }
+  ],
+  "states": [
+    { "id": "decl", "type": "start", "label": "声明注册", "sublabel": "ManagedValueSpec", "lane": "main", "col": 0, "tag": "start" },
+    { "id": "init", "type": "active", "label": "init 初始化", "sublabel": "get(checkpoint)", "lane": "main", "col": 1, "tag": "running" },
+    { "id": "inject", "type": "active", "label": "注入节点", "sublabel": "call() 取值", "lane": "main", "col": 2, "tag": "running" },
+    { "id": "consume", "type": "active", "label": "节点消费", "sublabel": "运行期使用", "lane": "main", "col": 3, "tag": "running" },
+    { "id": "cleanup", "type": "success", "label": "步末清理", "sublabel": "不持久化", "lane": "main", "col": 4, "tag": "terminal" }
+  ],
+  "transitions": [
+    { "from": "decl", "to": "init", "variant": "emphasis" },
+    { "from": "init", "to": "inject", "variant": "emphasis" },
+    { "from": "inject", "to": "consume", "variant": "emphasis" },
+    { "from": "consume", "to": "cleanup", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "运行期派生", "items": ["PregelScratchpad 现场派生", "不持久化、不进 checkpoint", "每步重新 get()"] },
+    { "dot": "cyan", "title": "典型实例", "items": ["IsLastStep：是否最后一步", "RemainingSteps：剩余步数", "由编译图在步初注入"] }
+  ]
+}

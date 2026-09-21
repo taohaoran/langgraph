@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "图状态构建 API 与状态通道",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1700, 600]
+  },
+  "components": [
+    { "id": "dev", "type": "external", "label": "开发者", "sublabel": "调用构建 API", "pos": [40, 280], "size": [120, 64] },
+    { "id": "builder", "type": "backend", "label": "StateGraph 构建器", "sublabel": "graph/state.py:131", "pos": [310, 270], "size": [160, 80], "tag": "builder" },
+    { "id": "compile", "type": "backend", "label": "compile 编译", "sublabel": "state.py:1177", "pos": [620, 280], "size": [130, 64], "tag": "validate" },
+    { "id": "channels", "type": "messagebus", "label": "状态通道层", "sublabel": "channels/*.py", "pos": [900, 270], "size": [150, 80], "tag": "BaseChannel" },
+    { "id": "compiled", "type": "backend", "label": "CompiledStateGraph", "sublabel": "state.py:1404 继承 Pregel", "pos": [1200, 270], "size": [160, 80] },
+    { "id": "pregel", "type": "external", "label": "Pregel 执行引擎", "sublabel": "pregel/main.py（相邻叶子）", "pos": [1510, 280], "size": [130, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "graph 构建与通道（本叶子）", "wraps": ["builder", "compile", "channels", "compiled"] }
+  ],
+  "connections": [
+    { "id": "d-b", "from": "dev", "to": "builder", "label": "注册节点边", "variant": "emphasis" },
+    { "id": "b-c", "from": "builder", "to": "compile", "label": "compile()" },
+    { "id": "c-ch", "from": "compile", "to": "channels", "label": "实例化通道", "variant": "emphasis" },
+    { "id": "ch-comp", "from": "channels", "to": "compiled", "label": "注入字典" },
+    { "id": "comp-p", "from": "compiled", "to": "pregel", "label": "invoke", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "通道类型", "items": ["LastValue：每步至多一值", "BinaryOperatorAggregate：reducer 聚合", "Topic：PubSub 广播", "NamedBarrierValue：多路 join", "Ephemeral/Untracked/Delta"] },
+    { "dot": "cyan", "title": "编译产物", "items": ["节点=PregelNode(triggers+writers)", "边=branch:to: 控制通道写入", "MessageGraph/MessagesState=消息 reducer"] }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "sdk-python 域：一次 SDK 调用核心时序",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1320, 800],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "app", "type": "external", "label": "应用代码", "sublabel": "await client.runs.wait(...)" },
+    { "id": "client", "type": "backend", "label": "LangGraphClient", "sublabel": "_async/client.py" },
+    { "id": "http", "type": "backend", "label": "HttpClient", "sublabel": "_async/http.py" },
+    { "id": "shared", "type": "backend", "label": "_shared 工具", "sublabel": "API Key 头 / orjson" },
+    { "id": "server", "type": "cloud", "label": "LangGraph API", "sublabel": "外部服务" },
+    { "id": "sse", "type": "backend", "label": "SSEDecoder", "sublabel": "sse.py" },
+    { "id": "stream", "type": "backend", "label": "StreamController", "sublabel": "stream/controller.py" }
+  ],
+  "segments": [
+    { "from": 150, "to": 300, "label": "一、构造与请求封装" },
+    { "from": 300, "to": 480, "label": "二、发送与 SSE 建立" },
+    { "from": 480, "to": 720, "label": "三、流式解码与扇出" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "app", "to": "client", "y": 180, "label": "get_client(url, api_key)" },
+    { "id": "m2", "from": "client", "to": "shared", "y": 220, "label": "_get_api_key / _get_headers" },
+    { "id": "m3", "from": "shared", "to": "client", "y": 260, "label": "headers + base_url", "variant": "return" },
+    { "id": "m4", "from": "app", "to": "client", "y": 310, "label": "runs.wait(thread_id, input)", "variant": "emphasis" },
+    { "id": "m5", "from": "client", "to": "http", "y": 355, "label": "stream(POST /runs/stream)" },
+    { "id": "m6", "from": "http", "to": "server", "y": 400, "label": "Accept: text/event-stream", "variant": "emphasis" },
+    { "id": "m7", "from": "server", "to": "http", "y": 445, "label": "200 OK + SSE 流", "variant": "return" },
+    { "id": "m8", "from": "http", "to": "sse", "y": 500, "label": "aiter_lines_raw → decode" },
+    { "id": "m9", "from": "sse", "to": "http", "y": 540, "label": "StreamPart", "variant": "return" },
+    { "id": "m10", "from": "http", "to": "stream", "y": 585, "label": "Event 入控制器" },
+    { "id": "m11", "from": "stream", "to": "app", "y": 640, "label": "去重匹配后 yield 条目", "variant": "emphasis" },
+    { "id": "m12", "from": "http", "to": "server", "y": 700, "label": "断线按 since/Location 重连（≤5）" }
+  ],
+  "activations": [
+    { "participant": "client", "from": 180, "to": 640, "type": "backend" },
+    { "participant": "http", "from": 355, "to": 700, "type": "backend" },
+    { "participant": "sse", "from": 500, "to": 540, "type": "backend" },
+    { "participant": "stream", "from": 585, "to": 640, "type": "backend" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "主路径", "items": [
+      "构造客户端注入 API Key 头",
+      "RunsClient 委托 HttpClient 起 SSE",
+      "SSEDecoder 解帧 → StreamController 扇出"
+    ] },
+    { "dot": "amber", "title": "健壮性", "items": [
+      "断线按 since 游标 + 同源 Location 重连",
+      "类型化错误经 _araise_for_status_typed 抛出",
+      "orjson 编解码放线程池不阻塞事件循环"
+    ] }
+  ]
+}

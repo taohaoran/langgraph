@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "core-runtime 域组件分层架构",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1560, 720]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "用户/应用", "sublabel": "调用方", "pos": [40, 320], "size": [130, 64] },
+
+    { "id": "gapi", "type": "backend", "label": "graph-state-api", "sublabel": "StateGraph 编译", "pos": [260, 180], "size": [160, 70], "tag": "建图" },
+    { "id": "func", "type": "backend", "label": "func-api", "sublabel": "@entrypoint/@task", "pos": [260, 400], "size": [160, 70], "tag": "函数式" },
+
+    { "id": "pregel", "type": "backend", "label": "pregel-engine", "sublabel": "BSP 超级步", "pos": [520, 280], "size": [160, 80], "tag": "执行核心" },
+    { "id": "io", "type": "backend", "label": "pregel-io-checkpoint", "sublabel": "IO/checkpoint 桥", "pos": [520, 460], "size": [160, 70] },
+
+    { "id": "stream", "type": "messagebus", "label": "stream-framework", "sublabel": "多路复用投影", "pos": [780, 320], "size": [160, 70], "tag": "流式输出" },
+
+    { "id": "mv", "type": "backend", "label": "managed-values", "sublabel": "运行期注入", "pos": [1020, 200], "size": [150, 64] },
+    { "id": "found", "type": "backend", "label": "internal-foundation", "sublabel": "Runnable/配置/serde", "pos": [1020, 320], "size": [150, 64] },
+    { "id": "remote", "type": "external", "label": "remote-debug", "sublabel": "RemoteGraph 代理", "pos": [1020, 440], "size": [150, 64] },
+
+    { "id": "saver", "type": "database", "label": "CheckpointSaver", "sublabel": "Memory/PG/SQLite", "pos": [1280, 460], "size": [150, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "core-runtime 执行内核（本域）", "wraps": ["gapi", "func", "pregel", "io", "stream", "mv", "found", "remote"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "user", "to": "gapi", "label": "建图" },
+    { "id": "c2", "from": "user", "to": "func", "label": "函数式", "variant": "emphasis" },
+    { "id": "c3", "from": "gapi", "to": "pregel", "label": "编译产物", "variant": "emphasis" },
+    { "id": "c4", "from": "func", "to": "pregel", "label": "单节点图" },
+    { "id": "c5", "from": "pregel", "to": "io" },
+    { "id": "c6", "from": "io", "to": "saver", "label": "持久化", "variant": "emphasis", "fromSide": "bottom", "toSide": "bottom" },
+    { "id": "c7", "from": "pregel", "to": "stream", "label": "流事件", "variant": "emphasis" },
+    { "id": "c8", "from": "mv", "to": "pregel", "label": "步初注入" },
+    { "id": "c9", "from": "found", "to": "pregel", "label": "横切复用" },
+    { "id": "c10", "from": "stream", "to": "user", "label": "投影输出", "variant": "emphasis" },
+    { "id": "c11", "from": "remote", "to": "pregel", "label": "协议代理", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "分层职责", "items": ["建图层：graph-state-api / func-api", "执行层：pregel-engine + IO/checkpoint", "输出层：stream-framework 多路复用"] },
+    { "dot": "cyan", "title": "横切支撑", "items": ["managed-values 运行期派生", "internal-foundation 基础设施", "remote-debug 远端协议代理"] },
+    { "dot": "amber", "title": "外部边界", "items": ["CheckpointSaver 后端不在本仓库", "langchain_core 为第三方依赖", "LangGraph Server 不在本仓库"] }
+  ]
+}

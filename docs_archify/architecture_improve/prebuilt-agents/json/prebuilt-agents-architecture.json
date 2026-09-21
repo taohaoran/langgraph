@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "prebuilt-agents 域：预构建 Agent 组件拓扑",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1180, 680]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "用户", "sublabel": "客户端调用", "pos": [40, 300], "size": [130, 64] },
+    { "id": "chatagent", "type": "backend", "label": "ChatAgentExecutor", "sublabel": "ReAct 循环", "pos": [250, 290], "size": [180, 70] },
+    { "id": "toolnode", "type": "backend", "label": "ToolNode", "sublabel": "工具执行节点", "pos": [520, 150], "size": [160, 64] },
+    { "id": "interrupt", "type": "backend", "label": "interrupt/Command", "sublabel": "人机中断原语", "pos": [520, 320], "size": [180, 64] },
+    { "id": "llm", "type": "external", "label": "LLM 提供商", "sublabel": "chat 模型（外部）", "pos": [830, 150], "size": [160, 64] },
+    { "id": "ckpt", "type": "database", "label": "checkpointer", "sublabel": "检查点持久化", "pos": [830, 320], "size": [160, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "本仓库源码内（prebuilt 包）", "wraps": ["chatagent", "toolnode", "interrupt"] },
+    { "kind": "security-group", "label": "外部依赖（不在本仓库源码内）", "wraps": ["llm", "ckpt"] }
+  ],
+  "connections": [
+    { "id": "u-ca", "from": "user", "to": "chatagent", "label": "invoke", "variant": "emphasis" },
+    { "id": "ca-llm", "from": "chatagent", "to": "llm", "label": "chat 调用", "fromSide": "right", "toSide": "left" },
+    { "id": "ca-tn", "from": "chatagent", "to": "toolnode", "label": "分发 tool_calls", "fromSide": "right", "toSide": "left" },
+    { "id": "ca-int", "from": "chatagent", "to": "interrupt", "label": "中断检查", "fromSide": "right", "toSide": "left" },
+    { "id": "int-ckpt", "from": "interrupt", "to": "ckpt", "label": "持久化", "fromSide": "right", "toSide": "left" },
+    { "id": "ca-u", "from": "chatagent", "to": "user", "label": "最终响应", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "域职责", "items": [
+      "ChatAgentExecutor 编排 ReAct 循环",
+      "ToolNode 并行执行工具调用",
+      "interrupt/Command 提供人机中断"
+    ] },
+    { "dot": "cyan", "title": "边界", "items": [
+      "LLM 调用与 checkpointer 为外部依赖",
+      "三者均运行在 Pregel 图上"
+    ] }
+  ]
+}

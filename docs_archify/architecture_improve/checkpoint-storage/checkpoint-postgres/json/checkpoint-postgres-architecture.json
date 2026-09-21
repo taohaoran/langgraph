@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "checkpoint-postgres：Postgres 后端结构与连接管理",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1180, 700]
+  },
+  "components": [
+    { "id": "pregel", "type": "external", "label": "Pregel / 用户", "sublabel": "checkpoint 接口", "pos": [40, 300], "size": [150, 70] },
+    { "id": "sync-saver", "type": "backend", "label": "PostgresSaver", "sublabel": "__init__.py", "pos": [280, 150], "size": [170, 64] },
+    { "id": "async-saver", "type": "backend", "label": "AsyncPostgresSaver", "sublabel": "aio.py", "pos": [280, 310], "size": [170, 64] },
+    { "id": "store", "type": "backend", "label": "PostgresStore", "sublabel": "store/postgres", "pos": [280, 470], "size": [170, 64] },
+    { "id": "conn", "type": "backend", "label": "get_connection", "sublabel": "连接 / 池 / pipeline", "pos": [560, 310], "size": [180, 64] },
+    { "id": "psycopg", "type": "external", "label": "psycopg", "sublabel": "驱动（外部）", "pos": [850, 150], "size": [150, 64] },
+    { "id": "pg", "type": "database", "label": "Postgres", "sublabel": "checkpoint 四表", "pos": [850, 470], "size": [150, 70] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "pregel", "to": "sync-saver", "label": "同步", "fromSide": "right", "toSide": "left" },
+    { "id": "c2", "from": "pregel", "to": "async-saver", "label": "异步", "fromSide": "right", "toSide": "left" },
+    { "id": "c3", "from": "sync-saver", "to": "conn", "label": "游标", "fromSide": "right", "toSide": "left" },
+    { "id": "c4", "from": "async-saver", "to": "conn", "fromSide": "right", "toSide": "left" },
+    { "id": "c5", "from": "store", "to": "conn", "label": "游标", "fromSide": "right", "toSide": "left" },
+    { "id": "c6", "from": "conn", "to": "psycopg", "label": "SQL", "fromSide": "right", "toSide": "bottom" },
+    { "id": "c7", "from": "psycopg", "to": "pg", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "双实现矩阵", "items": [
+      "同步与异步 Saver 共享 BasePostgresSaver 的 SQL 常量与迁移",
+      "异步方法用 run_coroutine_threadsafe 桥接同步实现"
+    ]},
+    { "dot": "violet", "title": "连接管理", "items": [
+      "单连接 / 连接池 / pipeline 三模式",
+      "pipeline 模式加 threading.Lock 串行化游标"
+    ]}
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "LangGraph 数据与请求流水线",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1100, 620]
+  },
+  "stages": [
+    { "label": "输入与构建" },
+    { "label": "图编译" },
+    { "label": "执行循环" },
+    { "label": "状态持久化" },
+    { "label": "输出" }
+  ],
+  "nodes": [
+    { "id": "user-input", "type": "frontend", "label": "用户输入", "sublabel": "input + config", "stage": 0, "row": 0 },
+    { "id": "stategraph", "type": "backend", "label": "StateGraph 编译", "sublabel": "节点/边/通道", "stage": 1, "row": 0 },
+    { "id": "pregel-loop", "type": "backend", "label": "PregelLoop", "sublabel": "超级步 tick", "stage": 2, "row": 0 },
+    { "id": "node-exec", "type": "backend", "label": "节点并发执行", "sublabel": "PregelRunner", "stage": 2, "row": 1 },
+    { "id": "channels", "type": "database", "label": "Channels 状态", "sublabel": "BinaryOp/Topic", "stage": 3, "row": 0 },
+    { "id": "checkpoint", "type": "database", "label": "Checkpoint 读写", "sublabel": "Saver 抽象", "stage": 3, "row": 1 },
+    { "id": "stream-transform", "type": "messagebus", "label": "流转换器", "sublabel": "StreamTransform", "stage": 4, "row": 0 },
+    { "id": "final-state", "type": "frontend", "label": "最终状态/流", "sublabel": "输出给用户", "stage": 4, "row": 1 }
+  ],
+  "flows": [
+    { "from": "user-input", "to": "stategraph", "label": "输入状态", "classification": "TypedDict/Pydantic", "variant": "emphasis" },
+    { "from": "stategraph", "to": "pregel-loop", "label": "编译为 Pregel 图", "classification": "节点+边+通道", "variant": "emphasis" },
+    { "from": "pregel-loop", "to": "node-exec", "label": "就绪任务", "classification": "任务调度", "variant": "default", "route": "vertical-channel", "labelDy": 10 },
+    { "from": "node-exec", "to": "channels", "label": "通道写入", "classification": "writes", "variant": "default", "labelDy": -14 },
+    { "from": "pregel-loop", "to": "checkpoint", "label": "每步持久化", "classification": "checkpoint tuple", "variant": "default", "labelDy": 14 },
+    { "from": "pregel-loop", "to": "stream-transform", "label": "流事件", "classification": "values/updates/debug", "variant": "emphasis", "route": "bottom-channel", "labelDy": 14 },
+    { "from": "stream-transform", "to": "final-state", "label": "转换后输出", "classification": "SSE/迭代器", "variant": "emphasis", "labelDy": 24 }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "状态模型", "items": ["Channels 是状态唯一真相源，节点通过读写通道通信", "BinaryOperatorAggregate 支持累加语义（如 add_messages）", "Topic 通道支持广播与订阅；恢复时从 checkpoint 重建 Channels"] },
+    { "dot": "emerald", "title": "流模式", "items": ["values: 每步完整状态；updates: 节点返回增量", "debug: 完整执行轨迹；messages: 消息级 token 流", "custom: 自定义 StreamTransform 转换器"] }
+  ]
+}

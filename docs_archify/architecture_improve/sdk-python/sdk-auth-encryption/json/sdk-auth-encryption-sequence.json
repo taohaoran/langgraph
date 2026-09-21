@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "sdk-auth-encryption：服务端认证与加解密调用链",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1280, 780],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "client", "type": "external", "label": "SDK 客户端", "sublabel": "注入 x-api-key" },
+    { "id": "mid", "type": "cloud", "label": "langgraph-api 中间件", "sublabel": "外部（不在本仓库源码内）" },
+    { "id": "auth", "type": "backend", "label": "Auth", "sublabel": "认证 + on.* 授权" },
+    { "id": "enc", "type": "backend", "label": "Encryption", "sublabel": "blob/json 加解密（beta）" },
+    { "id": "store", "type": "database", "label": "存储后端", "sublabel": "外部" }
+  ],
+  "segments": [
+    { "from": 150, "to": 360, "label": "一、每请求认证授权" },
+    { "from": 360, "to": 560, "label": "二、写路径：落库前加密" },
+    { "from": 560, "to": 720, "label": "三、读路径：读后解密" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "client", "to": "mid", "y": 180, "label": "HTTP 请求（x-api-key）" },
+    { "id": "m2", "from": "mid", "to": "auth", "y": 220, "label": "authenticate(credentials)" },
+    { "id": "m3", "from": "auth", "to": "mid", "y": 260, "label": "返回 user / 拒绝 401", "variant": "return" },
+    { "id": "m4", "from": "mid", "to": "auth", "y": 305, "label": "on.{resource}.{action}(ctx, value)" },
+    { "id": "m5", "from": "auth", "to": "mid", "y": 345, "label": "None/True 放行；False 403；dict 过滤", "variant": "return" },
+    { "id": "m6", "from": "mid", "to": "enc", "y": 400, "label": "encrypt.blob(ctx, data)" },
+    { "id": "m7", "from": "enc", "to": "mid", "y": 440, "label": "密文", "variant": "return" },
+    { "id": "m8", "from": "mid", "to": "store", "y": 490, "label": "写入密文" },
+    { "id": "m9", "from": "store", "to": "mid", "y": 530, "label": "读取密文", "variant": "return" },
+    { "id": "m10", "from": "mid", "to": "enc", "y": 590, "label": "decrypt.blob(ctx, blob)" },
+    { "id": "m11", "from": "enc", "to": "mid", "y": 630, "label": "明文", "variant": "return" },
+    { "id": "m12", "from": "mid", "to": "client", "y": 690, "label": "200 OK + 响应体", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "auth", "from": 220, "to": 345, "type": "backend" },
+    { "participant": "enc", "from": 400, "to": 630, "type": "backend" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "授权匹配顺序", "items": [
+      "resource+action 精确 > resource 通配 > 全局",
+      "store 操作改写 namespace 到用户身份",
+      "全局处理器仅允许一个"
+    ] },
+    { "dot": "amber", "title": "加解密约束", "items": [
+      "JSON 加解密必须保持 key 不变",
+      "解密侧不能依赖 ctx.model/field",
+      "重复注册抛 DuplicateHandlerError"
+    ] },
+    { "dot": "cyan", "title": "边界", "items": [
+      "中间件实际调用方在 langgraph-api（外部）",
+      "本仓库仅提供注册框架与契约"
+    ] }
+  ]
+}

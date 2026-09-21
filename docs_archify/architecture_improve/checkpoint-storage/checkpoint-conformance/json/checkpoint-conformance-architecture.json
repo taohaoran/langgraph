@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "checkpoint-conformance：契约驱动的一致性测试套件",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [
+      1180,
+      680
+    ]
+  },
+  "components": [
+    {
+      "id": "impl",
+      "type": "external",
+      "label": "被测后端",
+      "sublabel": "Memory/Postgres/Sqlite",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        170,
+        70
+      ]
+    },
+    {
+      "id": "registry",
+      "type": "backend",
+      "label": "@checkpointer_test",
+      "sublabel": "initializer.py 注册表",
+      "pos": [
+        320,
+        150
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "detector",
+      "type": "backend",
+      "label": "能力探测",
+      "sublabel": "capabilities.py",
+      "pos": [
+        320,
+        320
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "runner",
+      "type": "backend",
+      "label": "validate 编排器",
+      "sublabel": "validate.py",
+      "pos": [
+        620,
+        300
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "specs",
+      "type": "backend",
+      "label": "9 个 spec 套件",
+      "sublabel": "spec/test_*.py",
+      "pos": [
+        900,
+        180
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "report",
+      "type": "backend",
+      "label": "CapabilityReport",
+      "sublabel": "report.py 分级",
+      "pos": [
+        900,
+        440
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1",
+      "from": "registry",
+      "to": "runner",
+      "label": "工厂",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "c2",
+      "from": "impl",
+      "to": "detector",
+      "label": "实例",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "c3",
+      "from": "detector",
+      "to": "runner",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "c4",
+      "from": "runner",
+      "to": "specs",
+      "label": "逐能力跑",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "c5",
+      "from": "specs",
+      "to": "report",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "能力契约",
+      "items": [
+        "5 项 BASE 必备 + 4 项 EXTENDED 可选",
+        "按是否覆写异步方法自动探测"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "合规分级",
+      "items": [
+        "FULL / BASE+PARTIAL / BASE / NONE",
+        "每个能力套件用全新实例"
+      ]
+    }
+  ]
+}

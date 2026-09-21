@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "checkpoint-storage 域：checkpoint put/get 核心时序",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1120, 720],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "pregel", "type": "external", "label": "Pregel 调用方", "sublabel": "core-runtime" },
+    { "id": "saver", "type": "backend", "label": "BaseCheckpointSaver", "sublabel": "契约层" },
+    { "id": "serde", "type": "backend", "label": "serde", "sublabel": "JsonPlus" },
+    { "id": "backend", "type": "backend", "label": "具体后端", "sublabel": "postgres/sqlite" },
+    { "id": "db", "type": "database", "label": "外部数据库", "sublabel": "不在源码内" }
+  ],
+  "segments": [
+    { "from": 150, "to": 390, "label": "写入 put" },
+    { "from": 410, "to": 650, "label": "读取 get_tuple" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "pregel", "to": "saver", "y": 160, "label": "put(config, ckpt, meta, versions)", "variant": "emphasis" },
+    { "id": "m2", "from": "saver", "to": "serde", "y": 196, "label": "dumps_typed 序列化" },
+    { "id": "m3", "from": "serde", "to": "saver", "y": 232, "label": "(type, bytes)", "variant": "return" },
+    { "id": "m4", "from": "saver", "to": "backend", "y": 268, "label": "模板方法委托实现" },
+    { "id": "m5", "from": "backend", "to": "db", "y": 304, "label": "UPSERT 写主表/blob/writes" },
+    { "id": "m6", "from": "backend", "to": "saver", "y": 340, "label": "get_next_version 版本推进", "variant": "return" },
+    { "id": "m7", "from": "saver", "to": "pregel", "y": 376, "label": "next_config", "variant": "return" },
+    { "id": "m8", "from": "pregel", "to": "saver", "y": 420, "label": "get_tuple(config)" },
+    { "id": "m9", "from": "saver", "to": "backend", "y": 456, "label": "委托读取" },
+    { "id": "m10", "from": "backend", "to": "db", "y": 492, "label": "SELECT 聚合 blobs+writes" },
+    { "id": "m11", "from": "db", "to": "backend", "y": 528, "label": "行数据", "variant": "return" },
+    { "id": "m12", "from": "backend", "to": "serde", "y": 564, "label": "loads_typed 回填通道值" },
+    { "id": "m13", "from": "serde", "to": "backend", "y": 600, "label": "反序列化对象", "variant": "return" },
+    { "id": "m14", "from": "saver", "to": "pregel", "y": 636, "label": "CheckpointTuple", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "saver", "from": 160, "to": 376, "type": "backend" },
+    { "participant": "saver", "from": 420, "to": 636, "type": "backend" }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "内部基础设施层",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1700, 560]
+  },
+  "components": [
+    { "id": "runnable", "type": "backend", "label": "_runnable", "sublabel": "RunnableCallable/RunnableSeq", "pos": [40, 230], "size": [150, 80] },
+    { "id": "config", "type": "backend", "label": "_config", "sublabel": "merge/patch/ensure_config", "pos": [280, 230], "size": [150, 80] },
+    { "id": "errors", "type": "backend", "label": "errors + _constants", "sublabel": "异常族/保留键", "pos": [520, 230], "size": [160, 80] },
+    { "id": "serde", "type": "backend", "label": "_serde", "sublabel": "严格 msgpack 白名单", "pos": [770, 230], "size": [150, 80] },
+    { "id": "runtime", "type": "backend", "label": "runtime + _queue", "sublabel": "Runtime/队列/超时", "pos": [1010, 230], "size": [160, 80] },
+    { "id": "engine", "type": "external", "label": "Pregel / graph / stream", "sublabel": "消费方（其他叶子）", "pos": [1290, 240], "size": [170, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "_internal 基础设施（本叶子）", "wraps": ["runnable", "config", "errors", "serde", "runtime"] }
+  ],
+  "connections": [
+    { "id": "r-c", "from": "runnable", "to": "config", "label": "" },
+    { "id": "c-e", "from": "config", "to": "errors", "label": "" },
+    { "id": "e-s", "from": "errors", "to": "serde", "label": "" },
+    { "id": "s-r", "from": "serde", "to": "runtime", "label": "" },
+    { "id": "r-en", "from": "runtime", "to": "engine", "label": "被依赖", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "横切工具", "items": ["_timeout: 仅异步可取消", "_retry: default_retry_on", "_replay: 时间旅行重放", "_pydantic/_future/_fields"] },
+    { "dot": "cyan", "title": "错误族", "items": ["GraphBubbleUp 基类", "GraphInterrupt/GraphDrained", "NodeTimeout/Cancelled/Error", "ErrorCode 枚举"] }
+  ]
+}

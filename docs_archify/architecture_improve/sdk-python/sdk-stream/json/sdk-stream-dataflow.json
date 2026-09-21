@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "sdk-stream：v3 线程流式事件管道",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1280, 620]
+  },
+  "stages": [
+    { "label": "源与传输" },
+    { "label": "行/SSE 解码" },
+    { "label": "去重 + 扇出" },
+    { "label": "队列与投影" },
+    { "label": "缓冲与消费" }
+  ],
+  "nodes": [
+    { "id": "server", "type": "cloud", "label": "LangGraph API", "sublabel": "SSE/WebSocket（外部）", "stage": 0, "row": 0 },
+    { "id": "transport", "type": "backend", "label": "协议传输", "sublabel": "SSE / WebSocket Transport", "stage": 0, "row": 1 },
+    { "id": "line", "type": "backend", "label": "行/SSE 解码", "sublabel": "Bytes+SSE", "stage": 1, "row": 0 },
+    { "id": "fanout", "type": "backend", "label": "StreamController", "sublabel": "去重+游标+扇出", "stage": 2, "row": 0, "tag": "单消费者" },
+    { "id": "queue", "type": "messagebus", "label": "每订阅队列", "sublabel": "asyncio.Queue", "stage": 3, "row": 0 },
+    { "id": "proj", "type": "backend", "label": "投影解码器", "sublabel": "多通道", "stage": 3, "row": 1 },
+    { "id": "buffer", "type": "messagebus", "label": "多游标缓冲", "sublabel": "MultiCursorBuffer", "stage": 4, "row": 0 },
+    { "id": "app", "type": "frontend", "label": "projection 迭代器", "sublabel": "async for 消费", "stage": 4, "row": 1 }
+  ],
+  "flows": [
+    { "from": "server", "to": "transport", "label": "帧", "classification": "SSE/WS", "variant": "emphasis", "labelDy": 24 },
+    { "from": "transport", "to": "line", "label": "字节" },
+    { "from": "line", "to": "fanout", "label": "Event", "labelDy": 40 },
+    { "from": "fanout", "to": "queue", "label": "入队", "classification": "匹配", "variant": "emphasis", "labelDy": 40 },
+    { "from": "queue", "to": "proj", "label": "Event", "labelDy": 24 },
+    { "from": "proj", "to": "buffer", "label": "条目" },
+    { "from": "buffer", "to": "app", "label": "游标", "labelDy": 24 }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "扇出机制", "items": [
+      "单 _fanout 任务消费共享 SSE",
+      "LRU(10000) 按 event_id 去重重放",
+      "订阅 fit 扩宽时 open-new-close-old 轮转"
+    ] },
+    { "dot": "cyan", "title": "断连恢复", "items": [
+      "游标 seq 写入 since 体重连（非 Last-Event-ID 头）",
+      "指数退避 + jitter，最多 5 次",
+      "SyncStreamController 为同步对应物"
+    ] }
+  ]
+}

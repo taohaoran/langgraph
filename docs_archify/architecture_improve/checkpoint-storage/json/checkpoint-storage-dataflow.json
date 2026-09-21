@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "checkpoint-storage 域：checkpoint 持久化数据管道",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1200, 520]
+  },
+  "stages": [
+    { "label": "状态来源" },
+    { "label": "序列化变换" },
+    { "label": "拆分写入" },
+    { "label": "持久化落库" },
+    { "label": "读取回填" }
+  ],
+  "nodes": [
+    { "id": "n1", "type": "frontend", "label": "Pregel 状态快照", "stage": 0, "row": 0, "sublabel": "channel_values" },
+    { "id": "n2", "type": "backend", "label": "serde dumps_typed", "stage": 1, "row": 0, "sublabel": "ormsgpack" },
+    { "id": "n3", "type": "backend", "label": "三表 UPSERT", "stage": 2, "row": 0, "sublabel": "主表/blob/writes" },
+    { "id": "n4", "type": "database", "label": "外部数据库", "stage": 3, "row": 0, "sublabel": "不在源码内" },
+    { "id": "n5", "type": "backend", "label": "loads_typed 回填", "stage": 4, "row": 0, "sublabel": "Delta 回放" }
+  ],
+  "flows": [
+    { "from": "n1", "to": "n2", "label": "通道值", "variant": "emphasis", "route": "straight" },
+    { "from": "n2", "to": "n3", "label": "(type, bytes)", "route": "straight" },
+    { "from": "n3", "to": "n4", "label": "UPSERT SQL", "variant": "emphasis", "route": "straight" },
+    { "from": "n4", "to": "n5", "label": "回读行", "route": "straight" },
+    { "from": "n5", "to": "n1", "label": "重建 CheckpointTuple", "variant": "dashed", "route": "bottom-channel" }
+  ]
+}

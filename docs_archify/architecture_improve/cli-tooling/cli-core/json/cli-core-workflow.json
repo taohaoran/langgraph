@@ -1,0 +1,29 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "cli-core：CLI 命令分发流程",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "lanes": [
+    { "id": "user", "label": "终端用户" },
+    { "id": "entry", "label": "click 入口与分发" },
+    { "id": "infra", "label": "共享基础设施" }
+  ],
+  "nodes": [
+    { "id": "start", "type": "external", "lane": "user", "col": 0, "label": "用户输入命令" },
+    { "id": "parse", "type": "frontend", "lane": "entry", "col": 1, "label": "解析参数" },
+    { "id": "route", "type": "backend", "lane": "entry", "col": 2, "label": "路由命令" },
+    { "id": "validate", "type": "backend", "lane": "infra", "col": 3, "label": "校验配置" },
+    { "id": "exec", "type": "backend", "lane": "entry", "col": 4, "label": "执行子命令" },
+    { "id": "output", "type": "external", "lane": "user", "col": 5, "label": "打印结果" }
+  ],
+  "edges": [
+    { "from": "start", "to": "parse", "label": "argv", "variant": "emphasis" },
+    { "from": "parse", "to": "route", "label": "解析完成" },
+    { "from": "route", "to": "validate", "label": "命中子命令" },
+    { "from": "validate", "to": "exec", "label": "校验通过" },
+    { "from": "exec", "to": "output", "label": "执行完成" }
+  ]
+}

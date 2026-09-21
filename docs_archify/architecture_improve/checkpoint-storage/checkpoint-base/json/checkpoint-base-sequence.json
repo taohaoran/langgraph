@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "checkpoint-base：抽象契约 put/get/version 调用时序",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1080, 780],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "pregel", "type": "external", "label": "Pregel 调用方", "sublabel": "core 循环" },
+    { "id": "base", "type": "backend", "label": "BaseCheckpointSaver", "sublabel": "base/__init__.py:177" },
+    { "id": "mem", "type": "backend", "label": "InMemorySaver", "sublabel": "memory 实现" },
+    { "id": "serde", "type": "backend", "label": "serde", "sublabel": "JsonPlus" }
+  ],
+  "segments": [
+    { "from": 150, "to": 410, "label": "写入 put / aput" },
+    { "from": 430, "to": 690, "label": "读取 get_tuple / aget_tuple" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "pregel", "to": "base", "y": 160, "label": "put(config, ckpt, meta, versions)", "variant": "emphasis" },
+    { "id": "m2", "from": "base", "to": "mem", "y": 200, "label": "模板方法委托子类实现" },
+    { "id": "m3", "from": "mem", "to": "serde", "y": 240, "label": "dumps_typed 序列化 blob" },
+    { "id": "m4", "from": "serde", "to": "mem", "y": 280, "label": "(type, bytes)", "variant": "return" },
+    { "id": "m5", "from": "mem", "to": "base", "y": 320, "label": "get_next_version 单调递增", "variant": "return" },
+    { "id": "m6", "from": "base", "to": "pregel", "y": 360, "label": "next_config", "variant": "return" },
+    { "id": "m7", "from": "pregel", "to": "base", "y": 440, "label": "get_tuple(config)" },
+    { "id": "m8", "from": "base", "to": "mem", "y": 480, "label": "委托子类读取" },
+    { "id": "m9", "from": "mem", "to": "serde", "y": 520, "label": "loads_typed 回填通道值" },
+    { "id": "m10", "from": "serde", "to": "mem", "y": 560, "label": "反序列化对象", "variant": "return" },
+    { "id": "m11", "from": "mem", "to": "base", "y": 600, "label": "CheckpointTuple", "variant": "return" },
+    { "id": "m12", "from": "base", "to": "pregel", "y": 640, "label": "CheckpointTuple", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "base", "from": 160, "to": 360, "type": "backend" },
+    { "participant": "base", "from": 440, "to": 640, "type": "backend" }
+  ]
+}

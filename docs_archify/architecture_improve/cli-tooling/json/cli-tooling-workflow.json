@@ -1,0 +1,29 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "cli-tooling 域：部署流程多角色泳道",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "lanes": [
+    { "id": "user", "label": "用户" },
+    { "id": "cli", "label": "CLI 编排" },
+    { "id": "ext", "label": "外部系统" }
+  ],
+  "nodes": [
+    { "id": "start", "type": "external", "lane": "user", "col": 0, "label": "发起部署" },
+    { "id": "parse", "type": "frontend", "lane": "cli", "col": 1, "label": "解析配置" },
+    { "id": "build", "type": "backend", "lane": "cli", "col": 2, "label": "构建镜像" },
+    { "id": "push", "type": "cloud", "lane": "ext", "col": 3, "label": "推送镜像" },
+    { "id": "deploy", "type": "cloud", "lane": "ext", "col": 4, "label": "部署平台" },
+    { "id": "output", "type": "external", "lane": "user", "col": 5, "label": "输出地址" }
+  ],
+  "edges": [
+    { "from": "start", "to": "parse", "label": "输入", "variant": "emphasis" },
+    { "from": "parse", "to": "build", "label": "配置就绪" },
+    { "from": "build", "to": "push", "label": "镜像完成" },
+    { "from": "push", "to": "deploy", "label": "推送成功" },
+    { "from": "deploy", "to": "output", "label": "部署完成" }
+  ]
+}

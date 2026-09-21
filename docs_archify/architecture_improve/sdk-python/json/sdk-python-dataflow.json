@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "sdk-python 域：SSE 流式数据解码管道",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1320, 640]
+  },
+  "stages": [
+    { "label": "请求构造" },
+    { "label": "传输层" },
+    { "label": "SSE 解码" },
+    { "label": "控制器扇出" },
+    { "label": "消费出口" }
+  ],
+  "nodes": [
+    { "id": "app", "type": "external", "label": "应用代码", "sublabel": "runs.wait(...)", "stage": 0, "row": 0 },
+    { "id": "runs", "type": "backend", "label": "RunsClient", "sublabel": "拼 payload", "stage": 0, "row": 1 },
+
+    { "id": "http", "type": "backend", "label": "HttpClient", "sublabel": "stream()", "stage": 1, "row": 0 },
+    { "id": "server", "type": "cloud", "label": "LangGraph API", "sublabel": "SSE 响应流（外部）", "stage": 1, "row": 1 },
+
+    { "id": "line", "type": "backend", "label": "BytesLineDecoder", "sublabel": "行切分", "stage": 2, "row": 0 },
+    { "id": "sse", "type": "backend", "label": "SSEDecoder", "sublabel": "事件解析", "stage": 2, "row": 1 },
+
+    { "id": "fanout", "type": "backend", "label": "StreamController", "sublabel": "去重 + 匹配", "stage": 3, "row": 0, "tag": "单消费者" },
+    { "id": "proj", "type": "backend", "label": "投影解码器", "sublabel": "五通道状态机", "stage": 3, "row": 1 },
+
+    { "id": "queue", "type": "messagebus", "label": "订阅队列", "sublabel": "asyncio.Queue", "stage": 4, "row": 0 },
+    { "id": "out", "type": "frontend", "label": "projection 迭代器", "sublabel": "yield 条目", "stage": 4, "row": 1 }
+  ],
+  "flows": [
+    { "from": "app", "to": "runs", "label": "调用", "variant": "emphasis", "labelDy": 28 },
+    { "from": "runs", "to": "http", "label": "payload" },
+    { "from": "http", "to": "server", "label": "POST /stream", "variant": "emphasis", "labelDy": 28 },
+    { "from": "server", "to": "http", "label": "字节流" },
+    { "from": "http", "to": "line", "label": "chunk" },
+    { "from": "line", "to": "sse", "label": "line", "labelDy": 28 },
+    { "from": "sse", "to": "fanout", "label": "StreamPart", "variant": "emphasis" },
+    { "from": "fanout", "to": "proj", "label": "按通道分发", "labelDy": 28 },
+    { "from": "proj", "to": "queue", "label": "条目" },
+    { "from": "queue", "to": "out", "label": "yield", "variant": "emphasis", "labelDy": 28 }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "管道主路径", "items": [
+      "应用调用 → 资源客户端 → HTTP 传输",
+      "SSE 字节流 → 行 → 事件 → 控制器",
+      "控制器扇出 → 投影 → 队列 → 迭代器"
+    ] },
+    { "dot": "cyan", "title": "关键变换", "items": [
+      "BytesLineDecoder：兼容通用换行与跨 chunk",
+      "SSEDecoder：累计字段遇空行 flush",
+      "StreamController：LRU 去重 + 订阅匹配"
+    ] }
+  ]
+}

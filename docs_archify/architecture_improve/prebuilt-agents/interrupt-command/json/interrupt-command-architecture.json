@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "interrupt-command：中断与命令模块组件拓扑",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1100, 620]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "客户端", "sublabel": "invoke / Command(resume)", "pos": [40, 280], "size": [150, 64] },
+    { "id": "pregel", "type": "backend", "label": "Pregel 运行时", "sublabel": "捕获中断/重执行", "pos": [280, 280], "size": [170, 64] },
+    { "id": "types", "type": "backend", "label": "types.py", "sublabel": "interrupt/Command/Interrupt/GraphInterrupt", "pos": [560, 150], "size": [210, 64], "tag": "中断原语" },
+    { "id": "scratch", "type": "backend", "label": "scratchpad", "sublabel": "中断计数器/恢复值", "pos": [560, 300], "size": [190, 64] },
+    { "id": "ckpt", "type": "database", "label": "checkpointer", "sublabel": "检查点持久化", "pos": [850, 280], "size": [170, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "本仓库源码内（运行时与原语）", "wraps": ["pregel", "types", "scratch"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "user", "to": "pregel", "label": "invoke", "variant": "emphasis" },
+    { "id": "c2", "from": "pregel", "to": "types", "label": "调 interrupt()", "fromSide": "right", "toSide": "left" },
+    { "id": "c3", "from": "types", "to": "pregel", "label": "raise GraphInterrupt", "variant": "dashed", "fromSide": "left", "toSide": "right" },
+    { "id": "c4", "from": "pregel", "to": "scratch", "label": "读写计数器", "fromSide": "right", "toSide": "left" },
+    { "id": "c5", "from": "pregel", "to": "ckpt", "label": "" },
+    { "id": "c6", "from": "pregel", "to": "user", "label": "Interrupt", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "中断原语", "items": [
+      "interrupt(value) 在节点内抛出",
+      "Command(resume=...) 携带恢复值",
+      "GraphInterrupt 由 Pregel 捕获"
+    ] },
+    { "dot": "cyan", "title": "恢复语义", "items": [
+      "恢复时从头重执行节点",
+      "scratchpad 记录中断序号",
+      "按 idx 与 resume 值一一对应"
+    ] }
+  ]
+}

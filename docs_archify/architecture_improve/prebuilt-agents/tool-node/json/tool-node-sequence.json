@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "tool-node：ToolNode 工具调用执行链时序",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1080, 560],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "agent", "type": "external", "label": "agent 节点", "sublabel": "产出 tool_calls" },
+    { "id": "toolnode", "type": "backend", "label": "ToolNode", "sublabel": "_func 工具节点" },
+    { "id": "lookup", "type": "backend", "label": "tools_by_name", "sublabel": "按名查表" },
+    { "id": "tool", "type": "external", "label": "工具函数", "sublabel": "外部实现" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "agent", "to": "toolnode", "y": 165, "label": "AIMessage(tool_calls)", "variant": "emphasis" },
+    { "id": "m2", "from": "toolnode", "to": "lookup", "y": 215, "label": "_parse_input 后按名查工具" },
+    { "id": "m3", "from": "lookup", "to": "toolnode", "y": 260, "label": "可调用对象集合", "variant": "return" },
+    { "id": "m4", "from": "toolnode", "to": "tool", "y": 320, "label": "_inject_tool_args 注入后并行调用" },
+    { "id": "m5", "from": "tool", "to": "toolnode", "y": 380, "label": "ToolMessage 结果", "variant": "return" },
+    { "id": "m6", "from": "toolnode", "to": "agent", "y": 440, "label": "_combine_tool_outputs 合并返回", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "toolnode", "from": 165, "to": 440, "type": "backend" }
+  ]
+}

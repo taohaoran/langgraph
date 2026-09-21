@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "stream_mode 分发链时序",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1180, 720],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "用户", "sublabel": "stream(mode=...)" },
+    { "id": "runstream", "type": "backend", "label": "GraphRunStream", "sublabel": "入口" },
+    { "id": "mux", "type": "messagebus", "label": "StreamMux", "sublabel": "流水线" },
+    { "id": "t", "type": "backend", "label": "Transformer", "sublabel": "按模式投影" },
+    { "id": "chan", "type": "messagebus", "label": "StreamChannel", "sublabel": "单消费者" }
+  ],
+  "segments": [
+    { "from": 130, "to": 250, "label": "构建期注册" },
+    { "from": 280, "to": 490, "label": "运行期分发" },
+    { "from": 530, "to": 630, "label": "消费" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "runstream", "y": 160, "label": "stream([values, updates, debug])", "variant": "emphasis" },
+    { "id": "m2", "from": "runstream", "to": "mux", "y": 195, "label": "按 mode 注册 transformer", "variant": "emphasis" },
+    { "id": "m3", "from": "mux", "to": "t", "y": 235, "label": "绑定到 StreamChannel" },
+
+    { "id": "m4", "from": "runstream", "to": "mux", "y": 310, "label": "Pregel 产生 ProtocolEvent", "variant": "emphasis" },
+    { "id": "m5", "from": "mux", "to": "t", "y": 350, "label": "按注册顺序跑 process()", "variant": "emphasis" },
+    { "id": "m6", "from": "t", "to": "chan", "y": 390, "label": "产出投影事件" },
+    { "id": "m7", "from": "mux", "to": "chan", "y": 435, "label": "分配单调 seq；可抑制" },
+
+    { "id": "m8", "from": "user", "to": "chan", "y": 555, "label": "next() 迭代取事件", "variant": "emphasis" },
+    { "id": "m9", "from": "chan", "to": "user", "y": 605, "label": "返回投影结果", "variant": "return" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "多路复用", "items": ["多 mode 共享事件流", "transformer 按注册顺序跑", "子图套小 mux"] },
+    { "dot": "cyan", "title": "内置模式", "items": ["values/updates/messages/custom", "debug/tasks/checkpoints", "背压由调用者 pump"] }
+  ]
+}

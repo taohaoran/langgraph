@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "sdk-client：一次 runs.wait 流式调用链",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1200, 720],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "app", "type": "external", "label": "应用代码", "sublabel": "await client.runs.wait(...)" },
+    { "id": "runs", "type": "backend", "label": "RunsClient", "sublabel": "_async/runs.py" },
+    { "id": "http", "type": "backend", "label": "HttpClient", "sublabel": "_async/http.py" },
+    { "id": "sse", "type": "backend", "label": "SSEDecoder", "sublabel": "sse.py" },
+    { "id": "server", "type": "cloud", "label": "LangGraph API", "sublabel": "远端服务（外部）" }
+  ],
+  "segments": [
+    { "from": 150, "to": 260, "label": "一、发起运行" },
+    { "from": 260, "to": 430, "label": "二、建立 SSE 流" },
+    { "from": 430, "to": 620, "label": "三、逐事件解码回吐" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "app", "to": "runs", "y": 185, "label": "runs.wait(thread_id, assistant_id, input)", "variant": "emphasis" },
+    { "id": "m2", "from": "runs", "to": "http", "y": 225, "label": "stream(POST /threads/{id}/runs/stream)" },
+    { "id": "m3", "from": "http", "to": "server", "y": 270, "label": "Accept: text/event-stream + body" },
+    { "id": "m4", "from": "server", "to": "http", "y": 310, "label": "200 OK + SSE 响应流", "variant": "return" },
+    { "id": "m5", "from": "http", "to": "sse", "y": 360, "label": "aiter_lines_raw → decode(line)" },
+    { "id": "m6", "from": "sse", "to": "http", "y": 400, "label": "(event, data)", "variant": "return" },
+    { "id": "m7", "from": "http", "to": "runs", "y": 470, "label": "yield StreamPart" },
+    { "id": "m8", "from": "runs", "to": "app", "y": 520, "label": "yield 事件 / 最终结果", "variant": "return" },
+    { "id": "m9", "from": "http", "to": "server", "y": 580, "label": "断线按 Location + Last-Event-ID 重连（≤5 次）" }
+  ],
+  "activations": [
+    { "participant": "runs", "from": 185, "to": 520, "type": "backend" },
+    { "participant": "http", "from": 225, "to": 580, "type": "backend" },
+    { "participant": "sse", "from": 360, "to": 400, "type": "backend" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "健壮性", "items": [
+      "Content-Type 必须 text/event-stream",
+      "Location 重连仅限同源（防凭据泄漏）",
+      "Last-Event-ID 断点续传，最多 5 次"
+    ] },
+    { "dot": "cyan", "title": "错误包装", "items": [
+      "_araise_for_status_typed 抛类型化 SDK 异常",
+      "orjson 编解码放线程池不阻塞事件循环"
+    ] }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "chat-agent-executor：ReAct 调用链时序",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1080, 560],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "用户", "sublabel": "invoke" },
+    { "id": "agent", "type": "backend", "label": "agent 节点", "sublabel": "call_model" },
+    { "id": "llm", "type": "cloud", "label": "LLM", "sublabel": "外部模型" },
+    { "id": "tools", "type": "backend", "label": "tools 节点", "sublabel": "ToolNode" }
+  ],
+  "segments": [
+    { "from": 150, "to": 410, "label": "ReAct 循环" },
+    { "from": 420, "to": 480, "label": "结束" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "agent", "y": 160, "label": "invoke(state)", "variant": "emphasis" },
+    { "id": "m2", "from": "agent", "to": "llm", "y": 200, "label": "prompt | model.invoke(messages)" },
+    { "id": "m3", "from": "llm", "to": "agent", "y": 240, "label": "AIMessage(含 tool_calls)", "variant": "return" },
+    { "id": "m4", "from": "agent", "to": "tools", "y": 280, "label": "Send 派发每个 tool_call" },
+    { "id": "m5", "from": "tools", "to": "agent", "y": 320, "label": "ToolMessage 结果", "variant": "return" },
+    { "id": "m6", "from": "agent", "to": "llm", "y": 360, "label": "回环再调模型" },
+    { "id": "m7", "from": "llm", "to": "agent", "y": 400, "label": "AIMessage(无 tool_calls)", "variant": "return" },
+    { "id": "m8", "from": "agent", "to": "user", "y": 440, "label": "最终 messages", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "agent", "from": 160, "to": 440, "type": "backend" }
+  ]
+}

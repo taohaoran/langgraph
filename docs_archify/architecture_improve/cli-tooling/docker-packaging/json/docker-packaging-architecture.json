@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "docker-packaging：镜像构建、依赖追踪与主机后端",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1180, 720]
+  },
+  "components": [
+    { "id": "configsrc", "type": "backend", "label": "配置源", "sublabel": "langgraph.json + pyproject/uv.lock", "pos": [40, 300], "size": [160, 70] },
+
+    { "id": "gendockerfile", "type": "backend", "label": "Dockerfile 生成", "sublabel": "config.py + uv_lock.py", "pos": [270, 150], "size": [180, 70], "tag": "DockerBuildPlan" },
+    { "id": "gencompose", "type": "backend", "label": "compose 生成", "sublabel": "docker.py · compose_as_dict", "pos": [270, 260], "size": [180, 70] },
+    { "id": "capcheck", "type": "backend", "label": "能力探测", "sublabel": "check_capabilities/can_build_locally", "pos": [270, 370], "size": [180, 70] },
+    { "id": "track", "type": "backend", "label": "依赖追踪", "sublabel": "dependency_tracking.py", "pos": [270, 490], "size": [170, 60] },
+
+    { "id": "build", "type": "backend", "label": "构建镜像", "sublabel": "docker.py · build_docker_image", "pos": [520, 200], "size": [160, 70] },
+    { "id": "hostclient", "type": "backend", "label": "主机后端客户端", "sublabel": "host_backend.py · HostBackendClient", "pos": [520, 360], "size": [180, 70] },
+    { "id": "templ", "type": "backend", "label": "模板脚手架", "sublabel": "templates.py · create_new", "pos": [520, 490], "size": [160, 60] },
+
+    { "id": "docker", "type": "external", "label": "Docker 守护进程", "sublabel": "buildx/build（外部）", "pos": [780, 200], "size": [160, 70] },
+    { "id": "remote", "type": "cloud", "label": "registry / GCS", "sublabel": "推镜像 / 上传源（外部）", "pos": [780, 360], "size": [170, 70] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "本仓库源码内（cli 打包与主机客户端）", "wraps": ["configsrc", "gendockerfile", "gencompose", "capcheck", "track", "build", "hostclient", "templ"] },
+    { "kind": "security-group", "label": "外部系统（不在本仓库源码内）", "wraps": ["docker", "remote"] }
+  ],
+  "connections": [
+    { "id": "c-gd", "from": "configsrc", "to": "gendockerfile", "label": "validate_config" },
+    { "id": "c-gc", "from": "configsrc", "to": "gencompose", "label": "" },
+    { "id": "gd-build", "from": "gendockerfile", "to": "build", "label": "", "variant": "emphasis" },
+    { "id": "gc-build", "from": "gencompose", "to": "build", "label": "" },
+    { "id": "cap-build", "from": "capcheck", "to": "build", "label": "compose_type", "variant": "dashed" },
+    { "id": "build-dk", "from": "build", "to": "docker", "label": "subp_exec" },
+    { "id": "build-hc", "from": "build", "to": "hostclient", "label": "push token", "variant": "dashed", "fromSide": "bottom", "toSide": "top" },
+    { "id": "track-hc", "from": "track", "to": "hostclient", "label": "", "variant": "dashed", "fromSide": "right", "toSide": "left" },
+    { "id": "hc-remote", "from": "hostclient", "to": "remote", "label": "HTTPS" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Dockerfile 双轨", "items": [
+      "依赖安装路径：config.py 拼 Dockerfile",
+      "uv 工作区路径：uv_lock.py 解析 pyproject/uv.lock",
+      "DockerBuildPlan 累加 RUN/COPY 行后 render"
+    ] },
+    { "dot": "cyan", "title": "机制要点", "items": [
+      "compose 直连 Redis6 + pgvector/pg16 + api 服务",
+      "HostBackendClient 用 httpx（retries=3，30s）",
+      "tracked_packages 仅 google-adk，与服务端严格同步"
+    ] }
+  ]
+}

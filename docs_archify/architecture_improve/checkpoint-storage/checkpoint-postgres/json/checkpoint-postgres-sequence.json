@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "checkpoint-postgres：检查点写入与读取生命周期",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1180, 780],
+    "column_fit": "spread"
+  },
+  "participants": [
+    {
+      "id": "pregel",
+      "type": "external",
+      "label": "Pregel 调用方",
+      "sublabel": "put / get_tuple"
+    },
+    {
+      "id": "saver",
+      "type": "backend",
+      "label": "PostgresSaver",
+      "sublabel": "base.py"
+    },
+    {
+      "id": "serde",
+      "type": "backend",
+      "label": "serde",
+      "sublabel": "JsonPlus"
+    },
+    {
+      "id": "driver",
+      "type": "external",
+      "label": "psycopg",
+      "sublabel": "驱动"
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Postgres",
+      "sublabel": "三张表"
+    }
+  ],
+  "segments": [
+    { "from": 150, "to": 430, "label": "写入 put" },
+    { "from": 450, "to": 695, "label": "读取 get_tuple" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "pregel", "to": "saver", "y": 160, "label": "put(config, checkpoint, metadata, new_versions)", "variant": "emphasis" },
+    { "id": "m3", "from": "saver", "to": "serde", "y": 200, "label": "dumps_typed 序列化 blob/write" },
+    { "id": "m4", "from": "serde", "to": "saver", "y": 240, "label": "(type, bytes)", "variant": "return" },
+    { "id": "m5", "from": "saver", "to": "driver", "y": 280, "label": "executemany UPSERT_CHECKPOINT_BLOBS" },
+    { "id": "m6", "from": "saver", "to": "driver", "y": 320, "label": "execute UPSERT_CHECKPOINTS (Jsonb)" },
+    { "id": "m7", "from": "driver", "to": "db", "y": 360, "label": "INSERT ... ON CONFLICT DO UPDATE" },
+    { "id": "m8", "from": "saver", "to": "pregel", "y": 400, "label": "next_config", "variant": "return" },
+    { "id": "m9", "from": "pregel", "to": "saver", "y": 465, "label": "get_tuple(config)" },
+    { "id": "m10", "from": "saver", "to": "driver", "y": 500, "label": "SELECT_SQL 聚合 blobs+writes" },
+    { "id": "m11", "from": "driver", "to": "db", "y": 535, "label": "按 thread_id+ns+id 取行" },
+    { "id": "m12", "from": "db", "to": "driver", "y": 570, "label": "DictRow", "variant": "return" },
+    { "id": "m13", "from": "driver", "to": "saver", "y": 605, "label": "行数据", "variant": "return" },
+    { "id": "m14", "from": "saver", "to": "serde", "y": 635, "label": "loads_typed 回填通道值" },
+    { "id": "m15", "from": "serde", "to": "saver", "y": 665, "label": "反序列化对象", "variant": "return" },
+    { "id": "m16", "from": "saver", "to": "pregel", "y": 690, "label": "CheckpointTuple", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "saver", "from": 160, "to": 400, "type": "backend" },
+    { "participant": "saver", "from": 465, "to": 690, "type": "backend" }
+  ]
+}

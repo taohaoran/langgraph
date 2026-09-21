@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "interrupt-command：节点执行中断-恢复状态机",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1080, 720]
+  },
+  "lanes": [
+    { "id": "main", "label": "主执行路径" },
+    { "id": "wait", "label": "中断等待" },
+    { "id": "terminal", "label": "失败" }
+  ],
+  "states": [
+    { "id": "queued", "type": "start", "label": "待调度", "lane": "main", "col": 0, "step": "01" },
+    { "id": "running", "type": "active", "label": "运行中", "sublabel": "执行节点逻辑", "lane": "main", "col": 1, "step": "02" },
+    { "id": "completed", "type": "success", "label": "完成", "sublabel": "节点返回更新", "lane": "main", "col": 2, "step": "03" },
+    { "id": "interrupted", "type": "waiting", "label": "已中断", "sublabel": "抛 GraphInterrupt", "lane": "wait", "col": 0, "step": "04" },
+    { "id": "failed", "type": "failure", "label": "失败", "lane": "terminal", "col": 0, "step": "05" }
+  ],
+  "transitions": [
+    { "id": "t1", "from": "queued", "to": "running" },
+    { "id": "t2", "from": "running", "to": "completed" },
+    { "id": "t3", "from": "running", "to": "interrupted" },
+    { "id": "t4", "from": "interrupted", "to": "running", "label": "Command(resume)", "variant": "emphasis" },
+    { "id": "t5", "from": "running", "to": "failed" },
+    { "id": "t6", "from": "failed", "to": "running", "label": "重试" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "恢复语义", "items": [
+      "恢复时从头重执行节点",
+      "按中断序号 idx 与 resume 值对应",
+      "一个节点可多次 interrupt"
+    ] }
+  ]
+}

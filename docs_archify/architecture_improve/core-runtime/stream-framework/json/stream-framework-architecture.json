@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "流式框架组件分层",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1500, 620]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "用户", "sublabel": "迭代 stream()", "pos": [40, 480], "size": [130, 64] },
+    { "id": "runstream", "type": "backend", "label": "GraphRunStream", "sublabel": "stream/__init__.py", "pos": [280, 270], "size": [160, 80], "tag": "顶层入口" },
+    { "id": "mux", "type": "messagebus", "label": "StreamMux", "sublabel": "多路复用器", "pos": [540, 270], "size": [150, 80] },
+    { "id": "protocol", "type": "backend", "label": "ProtocolEvent", "sublabel": "_convert.py", "pos": [540, 440], "size": [150, 64] },
+    { "id": "transformer", "type": "backend", "label": "StreamTransformer", "sublabel": "模式投影", "pos": [780, 200], "size": [160, 64], "tag": "values/updates/debug" },
+    { "id": "transformer2", "type": "backend", "label": "Transformer", "sublabel": "messages/custom", "pos": [780, 320], "size": [160, 64] },
+    { "id": "chan", "type": "messagebus", "label": "StreamChannel", "sublabel": "单消费者队列", "pos": [1040, 270], "size": [160, 80] },
+    { "id": "pregel", "type": "external", "label": "Pregel 原始流", "sublabel": "StreamPart", "pos": [1040, 440], "size": [160, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "stream 流式框架（本叶子）", "wraps": ["runstream", "mux", "protocol", "transformer", "transformer2", "chan"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "pregel", "to": "protocol", "label": "StreamPart", "variant": "emphasis" },
+    { "id": "c2", "from": "protocol", "to": "mux", "label": "ProtocolEvent", "variant": "emphasis" },
+    { "id": "c3", "from": "runstream", "to": "mux", "label": "构建流水线" },
+    { "id": "c4", "from": "mux", "to": "transformer", "label": "values/updates" },
+    { "id": "c5", "from": "mux", "to": "transformer2", "label": "messages/custom" },
+    { "id": "c6", "from": "transformer", "to": "chan", "label": "投影" },
+    { "id": "c7", "from": "chan", "to": "user", "label": "事件", "variant": "emphasis", "route": "orthogonal-v" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "分层职责", "items": ["协议层：StreamPart→ProtocolEvent", "复用层：StreamMux 跑 transformer", "输出层：StreamChannel 单消费"] },
+    { "dot": "cyan", "title": "背压语义", "items": ["调用者驱动 pump", "每次游标前进至多 1 事件", "根 mux 分配单调 seq 全序"] }
+  ]
+}

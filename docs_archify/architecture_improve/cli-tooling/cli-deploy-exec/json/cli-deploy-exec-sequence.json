@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "langgraph deploy 生命周期（本地构建主路径）",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1200, 760],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "终端用户", "sublabel": "langgraph deploy" },
+    { "id": "cli", "type": "backend", "label": "deploy 编排器", "sublabel": "_deploy_cmd" },
+    { "id": "host", "type": "cloud", "label": "LangSmith 控制面", "sublabel": "HostBackendClient（外部）" },
+    { "id": "docker", "type": "external", "label": "本地 Docker", "sublabel": "buildx/login/push（外部）" },
+    { "id": "gcs", "type": "external", "label": "GCS 签名 URL", "sublabel": "远端构建上传（外部）" }
+  ],
+  "segments": [
+    { "from": 150, "to": 290, "label": "一、预检与解析部署" },
+    { "from": 290, "to": 530, "label": "二、本地构建并推送镜像" },
+    { "from": 530, "to": 690, "label": "三、更新部署并轮询" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "cli", "y": 180, "label": "langgraph deploy [--remote]", "variant": "emphasis" },
+    { "id": "m2", "from": "cli", "to": "host", "y": 225, "label": "get_deployment / find_by_name / create" },
+    { "id": "m3", "from": "host", "to": "cli", "y": 262, "label": "deployment_id", "variant": "return" },
+
+    { "id": "m4", "from": "cli", "to": "docker", "y": 305, "label": "buildx build --platform linux/amd64" },
+    { "id": "m5", "from": "docker", "to": "cli", "y": 342, "label": "镜像构建完成", "variant": "return" },
+    { "id": "m6", "from": "cli", "to": "host", "y": 385, "label": "request_push_token" },
+    { "id": "m7", "from": "host", "to": "cli", "y": 422, "label": "token + registry_url", "variant": "return" },
+    { "id": "m8", "from": "cli", "to": "docker", "y": 465, "label": "login / tag / push（最多重试 3 次）" },
+    { "id": "m9", "from": "docker", "to": "cli", "y": 502, "label": "push 成功 + digest", "variant": "return" },
+    { "id": "m10", "from": "cli", "to": "host", "y": 545, "label": "update_deployment(image digest)" },
+
+    { "id": "m11", "from": "cli", "to": "host", "y": 600, "label": "轮询 get_revision（超时 300s）" },
+    { "id": "m12", "from": "host", "to": "cli", "y": 637, "label": "BUILD_READY / ACTIVE", "variant": "return" },
+    { "id": "m13", "from": "cli", "to": "user", "y": 675, "label": "打印状态 URL 与结果", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "cli", "from": 180, "to": 675, "type": "backend" },
+    { "participant": "docker", "from": 305, "to": 502, "type": "external" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "远端构建分支（--remote 或无本地 Docker）", "items": [
+      "create_archive 打 source.tar.gz（≤200MB）",
+      "request_upload_url → PUT GCS 签名 URL",
+      "update_deployment_internal_source 触发远端构建",
+      "轮询超时 900s / 间隔 3s，可流式拉构建日志"
+    ] },
+    { "dot": "cyan", "title": "子命令", "items": [
+      "deploy list / revisions list / delete / logs",
+      "deploy 组用 DeployGroup 拍平帮助，无参时转发到 _deploy_cmd"
+    ] }
+  ]
+}

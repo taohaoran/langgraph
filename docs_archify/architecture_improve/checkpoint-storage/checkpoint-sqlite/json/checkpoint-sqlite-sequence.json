@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "checkpoint-sqlite：SQLite 事务读写时序",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1080, 800],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "pregel", "type": "external", "label": "Pregel 调用方", "sublabel": "put/get_tuple" },
+    { "id": "saver", "type": "backend", "label": "SqliteSaver", "sublabel": "__init__.py:45" },
+    { "id": "ctx", "type": "backend", "label": "cursor 上下文", "sublabel": "cursor():169 事务开关" },
+    { "id": "driver", "type": "external", "label": "sqlite3", "sublabel": "驱动" },
+    { "id": "db", "type": "database", "label": "SQLite", "sublabel": "单文件 WAL" }
+  ],
+  "segments": [
+    { "from": 150, "to": 470, "label": "写入 put 事务" },
+    { "from": 490, "to": 720, "label": "读取 get_tuple" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "pregel", "to": "saver", "y": 160, "label": "put(config, ckpt, meta, versions)", "variant": "emphasis" },
+    { "id": "m2", "from": "saver", "to": "ctx", "y": 200, "label": "cursor(transaction=True) 开启事务" },
+    { "id": "m3", "from": "ctx", "to": "driver", "y": 240, "label": "BEGIN" },
+    { "id": "m4", "from": "saver", "to": "driver", "y": 280, "label": "INSERT checkpoints / blob BLOB" },
+    { "id": "m5", "from": "saver", "to": "driver", "y": 320, "label": "INSERT writes" },
+    { "id": "m6", "from": "driver", "to": "db", "y": 360, "label": "行写入单文件" },
+    { "id": "m7", "from": "ctx", "to": "driver", "y": 400, "label": "提交即 commit():188", "variant": "return" },
+    { "id": "m8", "from": "saver", "to": "pregel", "y": 440, "label": "next_config", "variant": "return" },
+    { "id": "m9", "from": "pregel", "to": "saver", "y": 510, "label": "get_tuple(config)" },
+    { "id": "m10", "from": "saver", "to": "ctx", "y": 550, "label": "cursor(transaction=False) 只读" },
+    { "id": "m11", "from": "saver", "to": "driver", "y": 590, "label": "SELECT 按 thread 聚合" },
+    { "id": "m12", "from": "driver", "to": "db", "y": 630, "label": "查询行" },
+    { "id": "m13", "from": "db", "to": "driver", "y": 660, "label": "行数据", "variant": "return" },
+    { "id": "m14", "from": "saver", "to": "pregel", "y": 690, "label": "CheckpointTuple", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "saver", "from": 160, "to": 440, "type": "backend" },
+    { "participant": "saver", "from": 510, "to": 690, "type": "backend" }
+  ]
+}

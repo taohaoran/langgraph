@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Runnable.invoke 基础设施链时序",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1180, 720],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "caller", "type": "external", "label": "调用方", "sublabel": "节点函数" },
+    { "id": "runnable", "type": "backend", "label": "RunnableCallable", "sublabel": "_runnable.py" },
+    { "id": "config", "type": "backend", "label": "merge_configs", "sublabel": "_config.py" },
+    { "id": "serde", "type": "backend", "label": "_serde", "sublabel": "白名单序列化" },
+    { "id": "retry", "type": "backend", "label": "_retry/_timeout", "sublabel": "重试与超时" }
+  ],
+  "segments": [
+    { "from": 130, "to": 280, "label": "入参处理" },
+    { "from": 310, "to": 460, "label": "执行与横切" },
+    { "from": 520, "to": 620, "label": "返回" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "caller", "to": "runnable", "y": 160, "label": "invoke(input, config)", "variant": "emphasis" },
+    { "id": "m2", "from": "runnable", "to": "config", "y": 195, "label": "merge_configs(用户, 运行时)", "variant": "emphasis" },
+    { "id": "m3", "from": "config", "to": "runnable", "y": 235, "label": "合并后 config", "variant": "return" },
+    { "id": "m4", "from": "runnable", "to": "serde", "y": 270, "label": "校验可序列化类型（白名单）" },
+
+    { "id": "m5", "from": "runnable", "to": "retry", "y": 330, "label": "包裹 retry_on / timeout_policy", "variant": "emphasis" },
+    { "id": "m6", "from": "retry", "to": "runnable", "y": 375, "label": "执行用户函数体", "variant": "emphasis" },
+    { "id": "m7", "from": "runnable", "to": "serde", "y": 440, "label": "返回值经白名单序列化" },
+
+    { "id": "m8", "from": "runnable", "to": "caller", "y": 600, "label": "返回结果", "variant": "return" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "横切基础设施", "items": ["merge_configs 合并运行时配置", "serde 白名单允许自定义类型", "retry/timeout 策略可配"] },
+    { "dot": "cyan", "title": "错误族", "items": ["GraphBubbleUp 上抛特殊错误", "失败按 default_retry_on 重试", "ReplayState 支持时间旅行"] }
+  ]
+}

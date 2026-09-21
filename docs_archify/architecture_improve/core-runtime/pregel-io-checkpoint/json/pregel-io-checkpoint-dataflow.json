@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Checkpoint 读写数据管道",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1320, 720]
+  },
+  "stages": [
+    { "label": "恢复读取" },
+    { "label": "水化通道" },
+    { "label": "超级步执行" },
+    { "label": "快照序列化" },
+    { "label": "持久化写入" }
+  ],
+  "nodes": [
+    { "id": "saver", "type": "database", "label": "CheckpointSaver", "sublabel": "get_tuple", "stage": 0, "row": 0 },
+    { "id": "serde", "type": "backend", "label": "反序列化", "sublabel": "_serde.load", "stage": 0, "row": 1 },
+    { "id": "hydrate", "type": "backend", "label": "通道水化", "sublabel": "from_checkpoint", "stage": 1, "row": 0 },
+    { "id": "exec", "type": "backend", "label": "节点执行", "sublabel": "PregelRunner.tick", "stage": 2, "row": 0 },
+    { "id": "apply", "type": "backend", "label": "apply_writes", "sublabel": "通道聚合", "stage": 2, "row": 1 },
+    { "id": "snap", "type": "backend", "label": "checkpoint()", "sublabel": "通道快照", "stage": 3, "row": 0 },
+    { "id": "dump", "type": "backend", "label": "序列化", "sublabel": "_serde.dump", "stage": 3, "row": 1 },
+    { "id": "put", "type": "database", "label": "put", "sublabel": "saver.put", "stage": 4, "row": 0 }
+  ],
+  "flows": [
+    { "from": "saver", "to": "serde", "label": "bytes", "variant": "emphasis", "route": "vertical-channel" },
+    { "from": "serde", "to": "hydrate", "label": "checkpoint dict", "variant": "emphasis", "route": "straight" },
+    { "from": "hydrate", "to": "exec", "label": "恢复后状态", "variant": "emphasis", "route": "straight" },
+    { "from": "exec", "to": "apply", "label": "writes", "route": "vertical-channel" },
+    { "from": "apply", "to": "snap", "label": "新版本通道", "route": "straight" },
+    { "from": "snap", "to": "dump", "label": "快照", "route": "vertical-channel" },
+    { "from": "dump", "to": "put", "label": "bytes + metadata", "variant": "emphasis", "route": "straight" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "每步一次持久化", "items": ["每个超级步末写一次 checkpoint", "版本号由通道 bumped 决定", "DeltaChannel 回放祖先写入"] },
+    { "dot": "cyan", "title": "后端抽象", "items": ["Memory/Postgres/SQLite 多后端", "序列化白名单允许自定义类型", "不在本仓库源码内"] }
+  ]
+}

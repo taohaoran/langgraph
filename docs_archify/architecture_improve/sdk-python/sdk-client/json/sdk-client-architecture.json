@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "sdk-client：异步/同步双轨与资源客户端矩阵",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1340, 720]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "应用代码", "sublabel": "调用 SDK", "pos": [30, 350], "size": [120, 55] },
+    { "id": "factory", "type": "backend", "label": "客户端工厂", "sublabel": "get_client / get_sync_client", "pos": [210, 345], "size": [160, 60] },
+
+    { "id": "async-client", "type": "backend", "label": "LangGraphClient", "sublabel": "_async · 异步", "pos": [440, 160], "size": [160, 70], "tag": "asyncio" },
+    { "id": "sync-client", "type": "backend", "label": "SyncLangGraphClient", "sublabel": "_sync · 同步", "pos": [440, 470], "size": [160, 70] },
+
+    { "id": "resources", "type": "backend", "label": "资源客户端矩阵", "sublabel": "Assistants/Threads/Runs/Crons/Store", "pos": [680, 300], "size": [170, 90] },
+
+    { "id": "http-async", "type": "backend", "label": "HttpClient", "sublabel": "_async/http.py", "pos": [910, 160], "size": [150, 60] },
+    { "id": "http-sync", "type": "backend", "label": "SyncHttpClient", "sublabel": "_sync/http.py", "pos": [910, 470], "size": [150, 60] },
+
+    { "id": "shared", "type": "backend", "label": "_shared 共享层", "sublabel": "types/utilities", "pos": [680, 560], "size": [160, 55] },
+    { "id": "server", "type": "cloud", "label": "LangGraph API", "sublabel": "远端服务（外部）", "pos": [1160, 310], "size": [130, 70] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "异步轨 _async/", "wraps": ["async-client", "http-async"] },
+    { "kind": "region", "label": "同步轨 _sync/", "wraps": ["sync-client", "http-sync"] },
+    { "kind": "security-group", "label": "外部服务（不在本仓库源码内）", "wraps": ["server"] }
+  ],
+  "connections": [
+    { "id": "u-f", "from": "user", "to": "factory", "label": "url/api_key", "variant": "emphasis" },
+    { "id": "f-ac", "from": "factory", "to": "async-client", "label": "" },
+    { "id": "f-sc", "from": "factory", "to": "sync-client", "label": "" },
+    { "id": "ac-r", "from": "async-client", "to": "resources", "label": "组装子客户端", "variant": "dashed" },
+    { "id": "sc-r", "from": "sync-client", "to": "resources", "label": "组装子客户端", "variant": "dashed" },
+    { "id": "r-ha", "from": "resources", "to": "http-async", "label": "调用", "variant": "emphasis" },
+    { "id": "r-hs", "from": "resources", "to": "http-sync", "label": "调用" },
+    { "id": "ha-s", "from": "http-async", "to": "server", "label": "HTTPS/SSE" },
+    { "id": "hs-s", "from": "http-sync", "to": "server", "label": "HTTPS" },
+    { "id": "sh-ha", "from": "shared", "to": "http-async", "label": "", "variant": "dashed" },
+    { "id": "sh-hs", "from": "shared", "to": "http-sync", "label": "", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "资源客户端矩阵", "items": [
+      "AssistantsClient：图版本配置",
+      "ThreadsClient：多轮会话线程",
+      "RunsClient：运行 create/wait/stream",
+      "CronClient：定时任务",
+      "StoreClient：持久化共享存储"
+    ] },
+    { "dot": "cyan", "title": "双轨实现", "items": [
+      "_async 与 _sync 同构，方法一一对应",
+      "_shared 提供 API Key 解析/JSON 编解码",
+      "httpx 异步/同步 client，retries=5"
+    ] }
+  ]
+}

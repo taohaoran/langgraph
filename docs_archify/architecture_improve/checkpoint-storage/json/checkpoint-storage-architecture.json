@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "checkpoint-storage 域：抽象契约 × 多后端矩阵",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1200, 760]
+  },
+  "components": [
+    { "id": "pregel", "type": "external", "label": "Pregel 核心循环", "sublabel": "上游调用方", "pos": [30, 180], "size": [150, 60], "tag": "读写检查点" },
+    { "id": "app", "type": "external", "label": "应用 / Agent", "sublabel": "记忆与缓存调用方", "pos": [30, 420], "size": [150, 60], "tag": "存取记忆" },
+    { "id": "base-saver", "type": "backend", "label": "BaseCheckpointSaver", "sublabel": "检查点契约", "pos": [300, 110], "size": [200, 66], "tag": "契约层" },
+    { "id": "serde", "type": "backend", "label": "serde 序列化", "sublabel": "JsonPlus / 加密", "pos": [300, 210], "size": [200, 56], "tag": "共享能力" },
+    { "id": "base-store", "type": "backend", "label": "BaseStore / BaseCache", "sublabel": "存储与缓存契约", "pos": [300, 330], "size": [200, 66], "tag": "契约层" },
+    { "id": "memory", "type": "backend", "label": "InMemory 实现", "sublabel": "内存参考实现", "pos": [610, 110], "size": [180, 60], "tag": "默认实现" },
+    { "id": "postgres", "type": "backend", "label": "Postgres 后端", "sublabel": "Saver + Store", "pos": [610, 300], "size": [180, 60], "tag": "生产后端" },
+    { "id": "sqlite", "type": "backend", "label": "SQLite 后端", "sublabel": "Saver + Store + Cache", "pos": [610, 480], "size": [180, 60], "tag": "嵌入式后端" },
+    { "id": "conformance", "type": "backend", "label": "一致性测试套件", "sublabel": "9 能力点验收", "pos": [610, 630], "size": [180, 56], "tag": "验收侧" },
+    { "id": "pgdb", "type": "database", "label": "Postgres 库", "sublabel": "JSONB + pgvector", "pos": [910, 300], "size": [170, 60], "tag": "外部存储" },
+    { "id": "sqlitedb", "type": "database", "label": "SQLite 库", "sublabel": "单文件 WAL", "pos": [910, 480], "size": [170, 60], "tag": "外部存储" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "抽象契约层", "wraps": ["base-saver", "serde", "base-store"] },
+    { "kind": "region", "label": "后端矩阵与验收", "wraps": ["memory", "postgres", "sqlite", "conformance"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "pregel", "to": "base-saver", "label": "读写检查点", "variant": "emphasis", "labelDy": 40 },
+    { "id": "c2", "from": "app", "to": "base-store", "label": "存取记忆", "variant": "emphasis", "labelDy": -14 },
+    { "id": "c3", "from": "base-saver", "to": "serde" },
+    { "id": "c4", "from": "base-saver", "to": "memory" },
+    { "id": "c5", "from": "base-saver", "to": "postgres" },
+    { "id": "c6", "from": "base-saver", "to": "sqlite" },
+    { "id": "c7", "from": "base-store", "to": "postgres" },
+    { "id": "c8", "from": "base-store", "to": "sqlite" },
+    { "id": "c9", "from": "postgres", "to": "pgdb", "label": "SQL", "variant": "emphasis" },
+    { "id": "c10", "from": "sqlite", "to": "sqlitedb", "label": "SQL", "variant": "emphasis" },
+    { "id": "c11", "from": "conformance", "to": "base-saver", "label": "契约验收", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "域核心：契约驱动 × 多后端矩阵", "items": [
+      "BaseCheckpointSaver / BaseStore / BaseCache 定义契约",
+      "内存 / Postgres / SQLite 三后端实现同一契约",
+      "conformance 套件按 9 能力点验收可移植性"
+    ] },
+    { "dot": "cyan", "title": "外部边界（不在本仓库源码内）", "items": [
+      "Postgres 数据库与 pgvector 扩展",
+      "SQLite 文件与 aiosqlite 驱动",
+      "Redis 缓存与 LangChain Embeddings"
+    ] }
+  ]
+}

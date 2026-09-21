@@ -1,0 +1,29 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "checkpoint-conformance：一致性测试运行流程",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "lanes": [
+    { "id": "be", "label": "后端工厂" },
+    { "id": "runner", "label": "套件编排" },
+    { "id": "report", "label": "报告" }
+  ],
+  "nodes": [
+    { "id": "s", "type": "external", "lane": "be", "col": 0, "label": "后端接入", "width": 160 },
+    { "id": "reg", "type": "backend", "lane": "be", "col": 1, "label": "注册工厂", "sublabel": "checkpointer_test", "width": 170 },
+    { "id": "probe", "type": "backend", "lane": "runner", "col": 2, "label": "validate 探测", "sublabel": "validate.py:45", "width": 170 },
+    { "id": "spec", "type": "backend", "lane": "runner", "col": 3, "label": "运行 spec 用例", "sublabel": "9 个套件", "width": 170 },
+    { "id": "agg", "type": "backend", "lane": "report", "col": 4, "label": "汇总结果", "sublabel": "CapabilityResult", "width": 170 },
+    { "id": "grade", "type": "backend", "lane": "report", "col": 5, "label": "分级出报告", "sublabel": "FULL/BASE", "width": 170 }
+  ],
+  "edges": [
+    { "from": "s", "to": "reg", "label": "注册", "variant": "emphasis" },
+    { "from": "reg", "to": "probe", "label": "调用 validate" },
+    { "from": "probe", "to": "spec", "label": "按能力执行" },
+    { "from": "spec", "to": "agg", "label": "结果回收" },
+    { "from": "agg", "to": "grade", "label": "统计分级" }
+  ]
+}

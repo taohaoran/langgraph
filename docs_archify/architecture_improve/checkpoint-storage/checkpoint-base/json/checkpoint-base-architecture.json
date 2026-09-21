@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "checkpoint-base：检查点抽象层与内存实现",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1180, 720]
+  },
+  "components": [
+    {
+      "id": "pregel",
+      "type": "external",
+      "label": "Pregel 核心循环",
+      "sublabel": "上游调用方（langgraph 核心）",
+      "pos": [30, 300],
+      "size": [150, 64],
+      "tag": "发起读写"
+    },
+    {
+      "id": "checkpoint-types",
+      "type": "backend",
+      "label": "检查点数据结构",
+      "sublabel": "Checkpoint / Metadata / Tuple",
+      "pos": [290, 100],
+      "size": [210, 70],
+      "tag": "TypedDict 契约"
+    },
+    {
+      "id": "base-saver",
+      "type": "backend",
+      "label": "BaseCheckpointSaver",
+      "sublabel": "抽象基类 base/__init__.py:177",
+      "pos": [290, 280],
+      "size": [210, 90],
+      "tag": "契约层"
+    },
+    {
+      "id": "in-memory",
+      "type": "backend",
+      "label": "InMemorySaver",
+      "sublabel": "内存实现 memory/__init__.py:33",
+      "pos": [290, 470],
+      "size": [210, 76],
+      "tag": "默认实现"
+    },
+    {
+      "id": "serde-protocol",
+      "type": "backend",
+      "label": "SerializerProtocol",
+      "sublabel": "类型化序列化协议 serde/base.py:15",
+      "pos": [590, 290],
+      "size": [180, 76],
+      "tag": "能力缝"
+    },
+    {
+      "id": "json-plus",
+      "type": "backend",
+      "label": "JsonPlusSerializer",
+      "sublabel": "ormsgpack 主序列化器 jsonplus.py:82",
+      "pos": [860, 270],
+      "size": [200, 80],
+      "tag": "默认实现"
+    },
+    {
+      "id": "encrypted",
+      "type": "backend",
+      "label": "EncryptedSerializer",
+      "sublabel": "加密包装 encrypted.py:8",
+      "pos": [860, 440],
+      "size": [200, 70],
+      "tag": "可选包装"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "checkpoint 抽象层（本叶子源码内）",
+      "wraps": ["checkpoint-types", "base-saver", "in-memory", "serde-protocol", "json-plus", "encrypted"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pregel-base",
+      "from": "pregel",
+      "to": "base-saver",
+      "label": "读写检查点",
+      "variant": "emphasis",
+      "labelDy": 46
+    },
+    {
+      "id": "types-base",
+      "from": "checkpoint-types",
+      "to": "base-saver"
+    },
+    {
+      "id": "inherits",
+      "from": "in-memory",
+      "to": "base-saver",
+      "label": "继承契约",
+      "labelDy": -16
+    },
+    {
+      "id": "base-owns-serde",
+      "from": "base-saver",
+      "to": "serde-protocol",
+      "label": "持有 serde",
+      "labelDy": 14
+    },
+    {
+      "id": "serde-jsonplus",
+      "from": "serde-protocol",
+      "to": "json-plus",
+      "label": "默认实例",
+      "variant": "emphasis",
+      "labelDy": -14
+    },
+    {
+      "id": "encrypted-wraps",
+      "from": "encrypted",
+      "to": "json-plus",
+      "label": "包装内层",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "能力缝：抽象基类契约",
+      "items": [
+        "BaseCheckpointSaver 定义同步+异步双套方法",
+        "get_tuple/put/put_writes/list 为抽象方法",
+        "serde 为可注入策略对象，uuid6 生成单调 ID"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "序列化安全模型",
+      "items": [
+        "ormsgpack ext 码 0~7 编排重建对象",
+        "SAFE_MSGPACK_TYPES 白名单 + strict 模式",
+        "EncryptedSerializer 可外接 pycryptodome AES（外部）"
+      ]
+    }
+  ]
+}

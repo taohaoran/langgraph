@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "cli-core：CLI 入口与命令分发",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1200, 820]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "终端用户", "sublabel": "langgraph ...", "pos": [40, 360], "size": [130, 60] },
+    { "id": "entry", "type": "frontend", "label": "click 入口", "sublabel": "__main__.py / cli()", "pos": [240, 355], "size": [140, 60] },
+    { "id": "dispatcher", "type": "backend", "label": "命令分发", "sublabel": "cli.py · NestedHelpGroup", "pos": [450, 340], "size": [180, 90], "tag": "click.group" },
+
+    { "id": "up", "type": "backend", "label": "up", "sublabel": "本地起服务", "pos": [790, 60], "size": [140, 52] },
+    { "id": "build", "type": "backend", "label": "build", "sublabel": "构建镜像", "pos": [790, 125], "size": [140, 52] },
+    { "id": "dockerfile", "type": "backend", "label": "dockerfile", "sublabel": "生成 Dockerfile", "pos": [790, 190], "size": [140, 52] },
+    { "id": "dev", "type": "backend", "label": "dev", "sublabel": "开发热重载", "pos": [790, 255], "size": [140, 52] },
+    { "id": "validate", "type": "backend", "label": "validate", "sublabel": "校验配置", "pos": [790, 320], "size": [140, 52] },
+    { "id": "new", "type": "backend", "label": "new", "sublabel": "模板创建", "pos": [790, 385], "size": [140, 52] },
+    { "id": "deploy", "type": "backend", "label": "deploy", "sublabel": "部署命令组", "pos": [790, 450], "size": [140, 62], "tag": "deploy.py 接入" },
+
+    { "id": "cfg", "type": "backend", "label": "配置加载校验", "sublabel": "config.py / schemas.py", "pos": [300, 610], "size": [190, 60], "tag": "langgraph.json" },
+    { "id": "progress", "type": "backend", "label": "进度条", "sublabel": "progress.py", "pos": [530, 610], "size": [150, 60] },
+    { "id": "analytics", "type": "external", "label": "匿名上报", "sublabel": "analytics.py → Supabase", "pos": [720, 610], "size": [170, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "子命令矩阵（cli.py 内注册）", "wraps": ["up", "build", "dockerfile", "dev", "validate", "new", "deploy"] },
+    { "kind": "region", "label": "共享基础设施", "wraps": ["cfg", "progress", "analytics"] }
+  ],
+  "connections": [
+    { "id": "u-e", "from": "user", "to": "entry", "label": "argv", "variant": "emphasis" },
+    { "id": "e-d", "from": "entry", "to": "dispatcher", "label": "调用", "variant": "emphasis" },
+    { "id": "d-up", "from": "dispatcher", "to": "up", "label": "" },
+    { "id": "d-build", "from": "dispatcher", "to": "build", "label": "" },
+    { "id": "d-dockerfile", "from": "dispatcher", "to": "dockerfile", "label": "" },
+    { "id": "d-dev", "from": "dispatcher", "to": "dev", "label": "" },
+    { "id": "d-validate", "from": "dispatcher", "to": "validate", "label": "" },
+    { "id": "d-new", "from": "dispatcher", "to": "new", "label": "" },
+    { "id": "d-deploy", "from": "dispatcher", "to": "deploy", "label": "add_command", "variant": "emphasis" },
+    { "id": "d-cfg", "from": "dispatcher", "to": "cfg", "label": "validate_config_file", "variant": "dashed", "fromSide": "bottom", "toSide": "top" },
+    { "id": "d-prog", "from": "dispatcher", "to": "progress", "label": "Runner/Progress", "variant": "dashed", "fromSide": "bottom", "toSide": "top" },
+    { "id": "d-anal", "from": "dispatcher", "to": "analytics", "label": "@log_command", "variant": "dashed", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "命令矩阵", "items": [
+      "up：docker compose 起本地 API 服务",
+      "build：构建并打 Docker 镜像标签",
+      "dockerfile：导出 Dockerfile 与 compose",
+      "dev：内存模式热重载（inmem extra）",
+      "validate / new：校验配置、模板脚手架"
+    ] },
+    { "dot": "cyan", "title": "机制要点", "items": [
+      "NestedHelpGroup 把子命令拍平到顶层帮助",
+      "每个命令挂 @log_command 异步上报",
+      "deploy 组在 deploy.py 定义后 add_command"
+    ] }
+  ]
+}

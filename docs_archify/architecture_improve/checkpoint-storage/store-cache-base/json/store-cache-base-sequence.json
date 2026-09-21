@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "store-cache-base：Store/Cache 命中与回退调用时序",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1080, 780],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "app", "type": "external", "label": "应用调用方", "sublabel": "put/get/search" },
+    { "id": "batched", "type": "backend", "label": "AsyncBatchedBaseStore", "sublabel": "batch.py:58 合批去重" },
+    { "id": "base", "type": "backend", "label": "BaseStore", "sublabel": "abatch:745" },
+    { "id": "cache", "type": "backend", "label": "BaseCache", "sublabel": "get/set" },
+    { "id": "mem", "type": "backend", "label": "InMemory 实现", "sublabel": "memory" }
+  ],
+  "segments": [
+    { "from": 150, "to": 420, "label": "读取 get/search 命中与回退" },
+    { "from": 440, "to": 680, "label": "写入 put 合批落库" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "app", "to": "batched", "y": 160, "label": "aget(namespace, key)", "variant": "emphasis" },
+    { "id": "m2", "from": "batched", "to": "cache", "y": 200, "label": "先查缓存 get" },
+    { "id": "m3", "from": "cache", "to": "batched", "y": 240, "label": "未命中 None", "variant": "return" },
+    { "id": "m4", "from": "batched", "to": "base", "y": 280, "label": "abatch([GetOp]) 入队" },
+    { "id": "m5", "from": "base", "to": "mem", "y": 320, "label": "读取内存表" },
+    { "id": "m6", "from": "mem", "to": "base", "y": 360, "label": "Item | None", "variant": "return" },
+    { "id": "m7", "from": "base", "to": "batched", "y": 400, "label": "Result", "variant": "return" },
+    { "id": "m8", "from": "app", "to": "batched", "y": 460, "label": "aput(namespace, key, value)" },
+    { "id": "m9", "from": "batched", "to": "base", "y": 520, "label": "abatch([PutOp]) 同 tick 合批去重", "variant": "emphasis" },
+    { "id": "m10", "from": "base", "to": "mem", "y": 560, "label": "批量写入内存表" },
+    { "id": "m11", "from": "mem", "to": "base", "y": 600, "label": "完成", "variant": "return" },
+    { "id": "m12", "from": "base", "to": "app", "y": 640, "label": "落库结果", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "batched", "from": 160, "to": 400, "type": "backend" },
+    { "participant": "batched", "from": 460, "to": 640, "type": "backend" }
+  ]
+}

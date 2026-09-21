@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "LangGraph 核心执行生命周期（一次 graph.invoke/stream 调用）",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1100, 780],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "用户/应用", "sublabel": "调用方" },
+    { "id": "pregel", "type": "backend", "label": "Pregel 图", "sublabel": "invoke/stream" },
+    { "id": "loop", "type": "backend", "label": "PregelLoop", "sublabel": "超级步循环" },
+    { "id": "nodes", "type": "backend", "label": "节点函数", "sublabel": "并发执行" },
+    { "id": "checkpointer", "type": "database", "label": "CheckpointSaver", "sublabel": "持久化" },
+    { "id": "stream", "type": "messagebus", "label": "流输出", "sublabel": "StreamTransform" }
+  ],
+  "segments": [
+    { "from": 140, "to": 280, "label": "初始化与恢复" },
+    { "from": 300, "to": 600, "label": "超级步循环（BSP）" },
+    { "from": 620, "to": 720, "label": "完成与返回" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "pregel", "y": 160, "label": "invoke(input, config)", "variant": "emphasis" },
+    { "id": "m2", "from": "pregel", "to": "loop", "y": 195, "label": "初始化 PregelLoop" },
+    { "id": "m3", "from": "loop", "to": "checkpointer", "y": 230, "label": "get_tuple(config) 加载检查点" },
+    { "id": "m4", "from": "checkpointer", "to": "loop", "y": 260, "label": "返回 checkpoint", "variant": "return" },
+
+    { "id": "m5", "from": "loop", "to": "nodes", "y": 330, "label": "并发执行就绪节点（PregelRunner）", "variant": "emphasis" },
+    { "id": "m6", "from": "nodes", "to": "loop", "y": 370, "label": "返回通道写入 writes", "variant": "return" },
+    { "id": "m7", "from": "loop", "to": "checkpointer", "y": 410, "label": "put(checkpoint, metadata)" },
+    { "id": "m8", "from": "checkpointer", "to": "loop", "y": 445, "label": "持久化确认", "variant": "return" },
+    { "id": "m9", "from": "loop", "to": "stream", "y": 485, "label": "发射流事件（values/updates/debug）" },
+    { "id": "m10", "from": "loop", "to": "nodes", "y": 530, "label": "下一超级步：仍有就绪节点则重复", "variant": "dashed" },
+
+    { "id": "m11", "from": "loop", "to": "pregel", "y": 640, "label": "循环结束，返回最终状态" },
+    { "id": "m12", "from": "pregel", "to": "user", "y": 675, "label": "返回最终状态 / 流迭代器", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "pregel", "from": 160, "to": 675, "type": "backend" },
+    { "participant": "loop", "from": 195, "to": 640, "type": "backend" },
+    { "participant": "nodes", "from": 330, "to": 370, "type": "backend" },
+    { "participant": "checkpointer", "from": 230, "to": 260, "type": "database" },
+    { "participant": "checkpointer", "from": 410, "to": 445, "type": "database" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "BSP 超级步", "items": ["每个 tick = 一个超级步：计算就绪→并发执行→合并写入→持久化", "节点间无共享状态，通过 Channels 通信", "interrupt() 可在超级步间暂停，Command 恢复时跳转"] },
+    { "dot": "emerald", "title": "持久化语义", "items": ["每超级步结束写一次 checkpoint", "恢复时从最新 checkpoint 加载 Channels 状态", "支持 Memory/Postgres/SQLite 多后端"] }
+  ]
+}

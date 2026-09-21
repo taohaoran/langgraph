@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "checkpoint-sqlite：SQLite 后端结构",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1080, 700]
+  },
+  "components": [
+    { "id": "pregel", "type": "external", "label": "Pregel / 用户", "sublabel": "接口调用", "pos": [40, 300], "size": [150, 70] },
+    { "id": "sync-saver", "type": "backend", "label": "SqliteSaver", "sublabel": "checkpoint/sqlite", "pos": [280, 140], "size": [170, 64] },
+    { "id": "async-saver", "type": "backend", "label": "AsyncSqliteSaver", "sublabel": "aio.py (aiosqlite)", "pos": [280, 320], "size": [170, 64] },
+    { "id": "store", "type": "backend", "label": "SqliteStore", "sublabel": "store/sqlite (+sqlite-vec)", "pos": [280, 500], "size": [170, 64] },
+    { "id": "sqlite", "type": "database", "label": "SQLite", "sublabel": "checkpoints/writes/store/cache", "pos": [680, 320], "size": [180, 70] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "pregel", "to": "sync-saver", "label": "同步", "fromSide": "right", "toSide": "left" },
+    { "id": "c2", "from": "pregel", "to": "async-saver", "label": "异步", "fromSide": "right", "toSide": "left" },
+    { "id": "c3", "from": "pregel", "to": "store", "label": "batch", "fromSide": "right", "toSide": "left" },
+    { "id": "c4", "from": "sync-saver", "to": "sqlite", "label": "SQL", "fromSide": "right", "toSide": "left" },
+    { "id": "c5", "from": "async-saver", "to": "sqlite", "fromSide": "right", "toSide": "left" },
+    { "id": "c6", "from": "store", "to": "sqlite", "fromSide": "right", "toSide": "left" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "线程安全", "items": [
+      "单连接 + threading.Lock 串行化",
+      "PRAGMA journal_mode=WAL"
+    ]},
+    { "dot": "violet", "title": "三后端合一", "items": [
+      "Saver / Store / Cache 共用一个 sqlite3 连接族",
+      "向量检索用 sqlite-vec 扩展"
+    ]}
+  ]
+}

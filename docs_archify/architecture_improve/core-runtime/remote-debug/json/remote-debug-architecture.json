@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "远端代理与调试/绘制",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1600, 560]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "调用方", "sublabel": "像本地图一样调用", "pos": [40, 240], "size": [140, 64] },
+    { "id": "remote", "type": "backend", "label": "RemoteGraph", "sublabel": "remote.py:118 实现 PregelProtocol", "pos": [300, 230], "size": [160, 80] },
+    { "id": "runstream", "type": "backend", "label": "_remote_run_stream", "sublabel": "Command→v3 线协议适配", "pos": [560, 230], "size": [170, 80] },
+    { "id": "sdk", "type": "external", "label": "langgraph_sdk", "sublabel": "LangGraphClient（外部）", "pos": [840, 240], "size": [160, 64] },
+    { "id": "server", "type": "cloud", "label": "LangGraph Server", "sublabel": "远端部署（外部）", "pos": [1120, 240], "size": [160, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "remote/debug/draw（本叶子）", "wraps": ["remote", "runstream"] }
+  ],
+  "connections": [
+    { "id": "u-r", "from": "user", "to": "remote", "label": "invoke/stream", "variant": "emphasis" },
+    { "id": "r-rs", "from": "remote", "to": "runstream", "label": "流适配" },
+    { "id": "rs-s", "from": "runstream", "to": "sdk", "label": "HTTP/SSE", "variant": "emphasis" },
+    { "id": "s-sv", "from": "sdk", "to": "server", "label": "LangGraph API", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "调试映射", "items": ["map_debug_tasks/results/checkpoint", "tasks_w_writes 拼快照", "ANSI 着色 get_colored_text", "debug.py"] },
+    { "dot": "cyan", "title": "图绘制", "items": ["draw_graph 构造 langchain Graph", "_draw.py", "PregelProtocol 抽象接口", "v3 流仅支持 Command(resume=)"] }
+  ]
+}

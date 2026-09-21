@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "sdk-stream：SSE 解码与扇出时序",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1280, 760],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "server", "type": "cloud", "label": "LangGraph API", "sublabel": "SSE 对端（外部）" },
+    { "id": "pump", "type": "backend", "label": "transport pump", "sublabel": "ProtocolSseTransport" },
+    { "id": "line", "type": "backend", "label": "行解码器", "sublabel": "BytesLineDecoder" },
+    { "id": "sse", "type": "backend", "label": "SSE 事件解码", "sublabel": "SSEDecoder" },
+    { "id": "ctrl", "type": "backend", "label": "StreamController", "sublabel": "去重 + 匹配 + 入队" },
+    { "id": "sub", "type": "frontend", "label": "订阅消费者", "sublabel": "async for 迭代器" }
+  ],
+  "segments": [
+    { "from": 150, "to": 280, "label": "一、打开事件流" },
+    { "from": 280, "to": 480, "label": "二、逐帧解码" },
+    { "from": 480, "to": 700, "label": "三、扇出与消费" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "ctrl", "to": "pump", "y": 180, "label": "open_event_stream(filter)" },
+    { "id": "m2", "from": "pump", "to": "server", "y": 220, "label": "POST .../stream/events", "variant": "emphasis" },
+    { "id": "m3", "from": "server", "to": "pump", "y": 260, "label": "200 OK + SSE 流", "variant": "return" },
+    { "id": "m4", "from": "pump", "to": "line", "y": 310, "label": "decode(chunk) 字节块" },
+    { "id": "m5", "from": "line", "to": "sse", "y": 350, "label": "decode(line) 文本行" },
+    { "id": "m6", "from": "sse", "to": "ctrl", "y": 400, "label": "StreamPart(event,data)", "variant": "emphasis" },
+    { "id": "m7", "from": "ctrl", "to": "sub", "y": 460, "label": "LRU 去重后命中入队", "variant": "emphasis" },
+    { "id": "m8", "from": "sub", "to": "ctrl", "y": 510, "label": "queue.get() 阻塞等待", "variant": "return" },
+    { "id": "m9", "from": "ctrl", "to": "pump", "y": 570, "label": "断线：since=cursor 重连（≤5 次）" },
+    { "id": "m10", "from": "ctrl", "to": "sub", "y": 630, "label": "yield 投影条目", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "pump", "from": 180, "to": 570, "type": "backend" },
+    { "participant": "line", "from": 310, "to": 350, "type": "backend" },
+    { "participant": "sse", "from": 350, "to": 400, "type": "backend" },
+    { "participant": "ctrl", "from": 400, "to": 630, "type": "backend" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "解码链", "items": [
+      "字节块 → 行切分（兼容通用换行）",
+      "文本行 → SSE 事件（event/data/id/retry）",
+      "空行 flush 出 StreamPart"
+    ] },
+    { "dot": "amber", "title": "健壮性", "items": [
+      "LRU(10000) 去重服务端重放",
+      "重连用 since 体重连，非 Last-Event-ID",
+      "退避指数 + jitter，最多 5 次"
+    ] }
+  ]
+}

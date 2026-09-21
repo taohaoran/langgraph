@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "chat-agent-executor：ReAct 循环状态机",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [
+      1080,
+      620
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "ReAct 主循环"
+    }
+  ],
+  "states": [
+    {
+      "id": "entry",
+      "type": "start",
+      "label": "入口",
+      "sublabel": "pre_model_hook 可选",
+      "lane": "main",
+      "col": 0,
+      "step": "01"
+    },
+    {
+      "id": "call-llm",
+      "type": "active",
+      "label": "agent 节点",
+      "sublabel": "call_model 调模型",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "model"
+    },
+    {
+      "id": "route",
+      "type": "decision",
+      "label": "should_continue",
+      "sublabel": "检查 tool_calls",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "check"
+    },
+    {
+      "id": "tools",
+      "type": "active",
+      "label": "tools 节点",
+      "sublabel": "ToolNode 执行",
+      "lane": "main",
+      "col": 3,
+      "step": "04",
+      "tag": "work"
+    },
+    {
+      "id": "end",
+      "type": "success",
+      "label": "结束",
+      "sublabel": "无 tool_calls",
+      "lane": "main",
+      "col": 4,
+      "step": "05",
+      "tag": "done"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t1",
+      "from": "entry",
+      "to": "call-llm"
+    },
+    {
+      "id": "t2",
+      "from": "call-llm",
+      "to": "route"
+    },
+    {
+      "id": "t3",
+      "from": "route",
+      "to": "tools"
+    },
+    {
+      "id": "t4",
+      "from": "route",
+      "to": "end",
+      "label": "无 tool_calls",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          530,
+          300
+        ],
+        [
+          950,
+          300
+        ]
+      ]
+    },
+    {
+      "id": "t5",
+      "from": "tools",
+      "to": "call-llm",
+      "label": "回环再调模型",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          740,
+          70
+        ],
+        [
+          320,
+          70
+        ]
+      ]
+    },
+    {
+      "id": "t6",
+      "from": "tools",
+      "to": "end"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "ReAct 循环",
+      "items": [
+        "agent 与 tools 两节点条件边循环",
+        "无 tool_calls 或 return_direct 时退出"
+      ]
+    }
+  ]
+}

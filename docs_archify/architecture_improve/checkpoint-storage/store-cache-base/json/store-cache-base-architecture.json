@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "store-cache-base：键值存储与缓存并行抽象",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1180, 700]
+  },
+  "components": [
+    {
+      "id": "caller",
+      "type": "external",
+      "label": "应用 / Agent",
+      "sublabel": "上游调用方",
+      "pos": [40, 360],
+      "size": [130, 60]
+    },
+    {
+      "id": "base-store",
+      "type": "backend",
+      "label": "BaseStore",
+      "sublabel": "唯一抽象 batch/abatch",
+      "pos": [260, 150],
+      "size": [220, 76],
+      "tag": "存储契约"
+    },
+    {
+      "id": "async-batched",
+      "type": "backend",
+      "label": "AsyncBatchedBaseStore",
+      "sublabel": "后台合批 + 去重",
+      "pos": [260, 290],
+      "size": [220, 70]
+    },
+    {
+      "id": "in-memory-store",
+      "type": "backend",
+      "label": "InMemoryStore",
+      "sublabel": "内存 + 可选向量检索",
+      "pos": [260, 430],
+      "size": [220, 76],
+      "tag": "默认实现"
+    },
+    {
+      "id": "embed-helper",
+      "type": "backend",
+      "label": "嵌入适配层",
+      "sublabel": "ensure_embeddings / 路径抽取",
+      "pos": [580, 90],
+      "size": [240, 76]
+    },
+    {
+      "id": "embed-ext",
+      "type": "external",
+      "label": "嵌入模型供应商",
+      "sublabel": "OpenAI 等（外部）",
+      "pos": [900, 100],
+      "size": [190, 66]
+    },
+    {
+      "id": "base-cache",
+      "type": "backend",
+      "label": "BaseCache[ValueT]",
+      "sublabel": "get/set/clear 同步+异步",
+      "pos": [580, 380],
+      "size": [220, 76],
+      "tag": "缓存契约"
+    },
+    {
+      "id": "in-memory-cache",
+      "type": "backend",
+      "label": "InMemoryCache",
+      "sublabel": "内存 + TTL + RLock",
+      "pos": [900, 360],
+      "size": [190, 66],
+      "tag": "默认实现"
+    },
+    {
+      "id": "redis-cache",
+      "type": "backend",
+      "label": "RedisCache",
+      "sublabel": "MGET/pipeline，失败静默",
+      "pos": [900, 480],
+      "size": [190, 66]
+    },
+    {
+      "id": "redis-ext",
+      "type": "external",
+      "label": "Redis 服务器",
+      "sublabel": "外部，不在本仓库源码内",
+      "pos": [900, 600],
+      "size": [190, 60]
+    }
+  ],
+  "connections": [
+    {
+      "id": "caller-store",
+      "from": "caller",
+      "to": "base-store",
+      "label": "get/search/put/list",
+      "variant": "emphasis",
+      "labelDy": -26
+    },
+    {
+      "id": "batched-inherits",
+      "from": "async-batched",
+      "to": "base-store"
+    },
+    {
+      "id": "memstore-inherits",
+      "from": "in-memory-store",
+      "to": "async-batched"
+    },
+    {
+      "id": "conn-embed-ext",
+      "from": "embed-helper",
+      "to": "embed-ext",
+      "label": "embed_documents",
+      "variant": "dashed"
+    },
+    {
+      "id": "memcache-inherits",
+      "from": "in-memory-cache",
+      "to": "base-cache"
+    },
+    {
+      "id": "rediscache-inherits",
+      "from": "redis-cache",
+      "to": "base-cache"
+    },
+    {
+      "id": "conn-redis-ext",
+      "from": "redis-cache",
+      "to": "redis-ext",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "能力缝：Op 命令模式",
+      "items": [
+        "BaseStore 仅 batch/abatch 两个抽象方法",
+        "get/search/put 均构造 Op 再调 batch",
+        "AsyncBatched 后台合批并按 (ns,key) 去重"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "两条并行抽象",
+      "items": [
+        "BaseStore：跨线程长期记忆 + 可选向量检索",
+        "BaseCache：按 FullKey 取值 + TTL",
+        "RedisCache 失败静默降级，不阻断主流程"
+      ]
+    }
+  ]
+}

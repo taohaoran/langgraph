@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "StateGraph.compile() 编译调用链",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1180, 760],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "用户", "sublabel": "声明式建图" },
+    { "id": "sg", "type": "backend", "label": "StateGraph", "sublabel": "graph/state.py" },
+    { "id": "builder", "type": "backend", "label": "编译构建", "sublabel": "_builder/_validate" },
+    { "id": "channels", "type": "backend", "label": "通道解析", "sublabel": "_get_channels" },
+    { "id": "pregel", "type": "backend", "label": "Pregel", "sublabel": "main.py" }
+  ],
+  "segments": [
+    { "from": 130, "to": 270, "label": "声明阶段" },
+    { "from": 300, "to": 540, "label": "编译阶段" },
+    { "from": 580, "to": 700, "label": "产物" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "sg", "y": 160, "label": "add_node/add_edge", "variant": "emphasis" },
+    { "id": "m2", "from": "user", "to": "sg", "y": 210, "label": "compile(checkpointer=...)", "variant": "emphasis" },
+
+    { "id": "m3", "from": "sg", "to": "builder", "y": 330, "label": "_validate（环/孤立节点校验）" },
+    { "id": "m4", "from": "builder", "to": "channels", "y": 375, "label": "_get_channels（Annotated→通道）" },
+    { "id": "m5", "from": "channels", "to": "builder", "y": 415, "label": "返回通道字典", "variant": "return" },
+    { "id": "m6", "from": "builder", "to": "pregel", "y": 460, "label": "构造 PregelNode(triggers, channels)", "variant": "emphasis" },
+    { "id": "m7", "from": "builder", "to": "pregel", "y": 505, "label": "注入通道 + checkpointer" },
+
+    { "id": "m8", "from": "sg", "to": "user", "y": 620, "label": "返回 CompiledStateGraph", "variant": "return" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "编译产物", "items": ["CompiledStateGraph 继承 Pregel", "节点 = PregelNode", "状态字段 = BaseChannel"] },
+    { "dot": "cyan", "title": "通道分派", "items": ["Annotated[T, reducer] → 聚合通道", "无 reducer → LastValue", "ManagedValueSpec 运行期注入"] }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "cli-deploy-exec：部署流水线与子进程执行",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1180, 720]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "终端用户", "sublabel": "deploy / up / build", "pos": [40, 300], "size": [140, 60] },
+    { "id": "orchestrator", "type": "backend", "label": "deploy 编排器", "sublabel": "deploy.py · _deploy_cmd", "pos": [250, 290], "size": [180, 90], "tag": "四阶段" },
+    { "id": "emitter", "type": "backend", "label": "输出器", "sublabel": "_Emitter（文本/JSON）", "pos": [250, 450], "size": [170, 60] },
+
+    { "id": "runner", "type": "backend", "label": "子进程执行", "sublabel": "exec.py · Runner/subp_exec", "pos": [490, 180], "size": [170, 60] },
+    { "id": "archive", "type": "backend", "label": "源码打包", "sublabel": "archive.py · create_archive", "pos": [490, 320], "size": [170, 60] },
+    { "id": "hostclient", "type": "backend", "label": "主机后端客户端", "sublabel": "host_backend.py · HostBackendClient", "pos": [490, 460], "size": [180, 60] },
+
+    { "id": "docker", "type": "external", "label": "本地 Docker", "sublabel": "buildx/login/push", "pos": [760, 180], "size": [160, 60] },
+    { "id": "gcs", "type": "external", "label": "GCS 签名上传", "sublabel": "远端构建源", "pos": [760, 320], "size": [160, 60] },
+    { "id": "control", "type": "cloud", "label": "LangSmith 控制面", "sublabel": "deployments/revisions API", "pos": [760, 460], "size": [170, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "本仓库源码内", "wraps": ["orchestrator", "emitter", "runner", "archive", "hostclient"] },
+    { "kind": "security-group", "label": "外部系统（不在本仓库源码内）", "wraps": ["docker", "gcs", "control"] }
+  ],
+  "connections": [
+    { "id": "u-o", "from": "user", "to": "orchestrator", "label": "argv", "variant": "emphasis" },
+    { "id": "o-e", "from": "orchestrator", "to": "emitter", "label": "step/result", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "id": "o-r", "from": "orchestrator", "to": "runner", "label": "本地构建", "variant": "emphasis" },
+    { "id": "o-a", "from": "orchestrator", "to": "archive", "label": "远端构建", "variant": "emphasis" },
+    { "id": "o-h", "from": "orchestrator", "to": "hostclient", "label": "API 调用", "variant": "dashed", "fromSide": "bottom", "toSide": "top" },
+    { "id": "r-d", "from": "runner", "to": "docker", "label": "subp_exec" },
+    { "id": "a-g", "from": "archive", "to": "gcs", "label": "source.tar.gz" },
+    { "id": "h-c", "from": "hostclient", "to": "control", "label": "HTTPS" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "四阶段编排", "items": [
+      "预检：校验命令/配置/env/构建模式",
+      "解析或创建 deployment",
+      "构建：本地 buildx push 或远端 tarball",
+      "轮询 revision 状态至终态"
+    ] },
+    { "dot": "cyan", "title": "exec.py 能力", "items": [
+      "asyncio.Runner 上下文 + 跨版本兼容",
+      "subp_exec 异步子进程 + SIGINT/SIGTERM",
+      "monitor_stream 按行监视 stdout/stderr"
+    ] }
+  ]
+}

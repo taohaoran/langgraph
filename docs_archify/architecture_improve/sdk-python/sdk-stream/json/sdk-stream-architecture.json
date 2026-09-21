@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "sdk-stream：流式传输与解码分层",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1280, 680]
+  },
+  "components": [
+    { "id": "server", "type": "cloud", "label": "LangGraph API", "sublabel": "SSE/WebSocket 对端（外部）", "pos": [40, 290], "size": [150, 70] },
+
+    { "id": "transport_if", "type": "backend", "label": "Transport 契约", "sublabel": "AsyncProtocolTransport", "pos": [260, 120], "size": [160, 60], "tag": "传输抽象" },
+    { "id": "sse_transport", "type": "backend", "label": "SSE 传输", "sublabel": "ProtocolSseTransport", "pos": [260, 250], "size": [160, 60] },
+    { "id": "ws_transport", "type": "backend", "label": "WS 传输", "sublabel": "ProtocolWebSocketTransport", "pos": [260, 380], "size": [160, 60] },
+
+    { "id": "line_dec", "type": "backend", "label": "行解码器", "sublabel": "BytesLineDecoder", "pos": [510, 120], "size": [150, 60] },
+    { "id": "sse_dec", "type": "backend", "label": "SSE 事件解码", "sublabel": "SSEDecoder", "pos": [510, 250], "size": [150, 60] },
+    { "id": "proj_dec", "type": "backend", "label": "投影解码器", "sublabel": "五种通道状态机", "pos": [510, 380], "size": [150, 60] },
+
+    { "id": "controller", "type": "backend", "label": "StreamController", "sublabel": "订阅+扇出+去重+重连", "pos": [760, 250], "size": [170, 70], "tag": "单消费者" },
+
+    { "id": "queue", "type": "messagebus", "label": "订阅队列", "sublabel": "asyncio.Queue(1024)", "pos": [1020, 180], "size": [150, 60] },
+    { "id": "consumer", "type": "frontend", "label": "projection 迭代器", "sublabel": "async for 消费", "pos": [1020, 320], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "传输层（transport/）", "wraps": ["transport_if", "sse_transport", "ws_transport"] },
+    { "kind": "region", "label": "解码层", "wraps": ["line_dec", "sse_dec", "proj_dec"] },
+    { "kind": "region", "label": "控制层（controller.py）", "wraps": ["controller"] },
+    { "kind": "security-group", "label": "外部（不在本仓库源码内）", "wraps": ["server"] }
+  ],
+  "connections": [
+    { "id": "srv-sse", "from": "server", "to": "sse_transport", "label": "SSE 帧", "variant": "emphasis" },
+    { "id": "srv-ws", "from": "server", "to": "ws_transport", "label": "WS 帧", "variant": "dashed" },
+    { "id": "sse-line", "from": "sse_transport", "to": "line_dec", "label": "字节块", "labelDy": 28 },
+    { "id": "line-sse", "from": "line_dec", "to": "sse_dec", "label": "文本行", "labelDy": 28 },
+    { "id": "sse-ctrl", "from": "sse_dec", "to": "controller", "label": "Event", "variant": "emphasis" },
+    { "id": "ctrl-queue", "from": "controller", "to": "queue", "label": "命中入队", "variant": "emphasis" },
+    { "id": "queue-cons", "from": "queue", "to": "consumer", "label": "yield", "labelDy": 28 }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "分层职责", "items": [
+      "传输层：协议抽象 + SSE/WS 两实现",
+      "解码层：行切分 → SSE 事件 → 投影条目",
+      "控制层：订阅表 + 扇出 + LRU 去重 + 重连"
+    ] },
+    { "dot": "cyan", "title": "关键边界", "items": [
+      "transport 协议（Protocol）可互换 SSE/WS",
+      "投影解码器按通道独立状态机",
+      "外部 LangGraph API 不在本仓库源码内"
+    ] }
+  ]
+}

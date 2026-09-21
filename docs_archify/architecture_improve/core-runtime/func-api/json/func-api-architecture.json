@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "函数式 API 与 Pregel 桥接",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1500, 560]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "用户函数", "sublabel": "@entrypoint", "pos": [40, 240], "size": [140, 64] },
+    { "id": "entry", "type": "backend", "label": "entrypoint 装饰器", "sublabel": "func/__init__.py:262", "pos": [320, 230], "size": [170, 80], "tag": "wrapper" },
+    { "id": "pregel", "type": "backend", "label": "自动构建 Pregel", "sublabel": "__init__.py:576", "pos": [630, 230], "size": [160, 80] },
+    { "id": "engine", "type": "external", "label": "Pregel 引擎", "sublabel": "pregel/main.py", "pos": [920, 240], "size": [160, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "func 函数式 API（本叶子）", "wraps": ["entry", "pregel"] }
+  ],
+  "connections": [
+    { "id": "u-e", "from": "user", "to": "entry", "label": "装饰", "variant": "emphasis" },
+    { "id": "e-p", "from": "entry", "to": "pregel", "label": "单节点图", "variant": "emphasis" },
+    { "id": "p-en", "from": "pregel", "to": "engine", "label": "invoke", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "自动建图", "items": ["START: EphemeralValue", "END: LastValue(返回值)", "PREVIOUS: LastValue(保存值)", "input=START output=END"] },
+    { "dot": "cyan", "title": "@task 子任务", "items": ["_TaskFunction 包装", "_call_with_options → Future", "可并行 future.result()", "支持 retry/cache/timeout"] }
+  ]
+}

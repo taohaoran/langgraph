@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "流式事件管道",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1280, 720]
+  },
+  "stages": [
+    { "label": "生产" },
+    { "label": "协议封装" },
+    { "label": "多路复用" },
+    { "label": "模式转换" },
+    { "label": "投影消费" }
+  ],
+  "nodes": [
+    { "id": "pregel", "type": "backend", "label": "Pregel 原始流", "sublabel": "StreamPart", "stage": 0, "row": 0 },
+    { "id": "convert", "type": "backend", "label": "协议封装", "sublabel": "_convert.py", "stage": 1, "row": 0 },
+    { "id": "mux", "type": "messagebus", "label": "StreamMux", "sublabel": "转换流水线", "stage": 2, "row": 0 },
+    { "id": "values", "type": "backend", "label": "ValuesTransformer", "sublabel": "values", "stage": 3, "row": 0 },
+    { "id": "updates", "type": "backend", "label": "UpdatesTransformer", "sublabel": "updates", "stage": 3, "row": 1 },
+    { "id": "messages", "type": "backend", "label": "MessagesTransformer", "sublabel": "messages", "stage": 3, "row": 2 },
+    { "id": "chan", "type": "messagebus", "label": "StreamChannel", "sublabel": "单消费者队列", "stage": 4, "row": 0 }
+  ],
+  "flows": [
+    { "from": "pregel", "to": "convert", "label": "StreamPart", "variant": "emphasis", "route": "straight" },
+    { "from": "convert", "to": "mux", "label": "ProtocolEvent", "variant": "emphasis", "route": "straight" },
+    { "from": "mux", "to": "values", "label": "values" },
+    { "from": "mux", "to": "updates", "label": "updates" },
+    { "from": "mux", "to": "messages", "label": "messages" },
+    { "from": "values", "to": "chan", "label": "projection" },
+    { "from": "messages", "to": "chan", "label": "projection" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "多路复用", "items": ["StreamMux 按注册顺序跑 transformer", "process 返回 False 可抑制事件", "before_builtins 内容改写优先", "子图 _make_child 套小 mux"] },
+    { "dot": "cyan", "title": "背压", "items": ["调用者驱动 pump", "每次游标前进至多 1 事件", "StreamChannel 单消费者", "GraphRunStream 迭代输出"] }
+  ]
+}

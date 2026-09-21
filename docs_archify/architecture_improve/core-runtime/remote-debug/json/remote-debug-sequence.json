@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "RemoteGraph 远端调用链时序",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1180, 720],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "client", "type": "external", "label": "客户端", "sublabel": "用户进程" },
+    { "id": "rg", "type": "backend", "label": "RemoteGraph", "sublabel": "remote.py 代理" },
+    { "id": "http", "type": "messagebus", "label": "HTTP/SSE", "sublabel": "线协议" },
+    { "id": "server", "type": "external", "label": "LangGraph Server", "sublabel": "不在本仓库" },
+    { "id": "local", "type": "backend", "label": "本地 Pregel", "sublabel": "执行" }
+  ],
+  "segments": [
+    { "from": 130, "to": 250, "label": "调用发起" },
+    { "from": 280, "to": 460, "label": "远端执行与流式回传" },
+    { "from": 520, "to": 620, "label": "本地消费" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "client", "to": "rg", "y": 160, "label": "graph.invoke/stream(input, config)", "variant": "emphasis" },
+    { "id": "m2", "from": "rg", "to": "http", "y": 195, "label": "序列化请求（PregelProtocol）", "variant": "emphasis" },
+    { "id": "m3", "from": "http", "to": "server", "y": 235, "label": "POST /runs（SSE 流）" },
+
+    { "id": "m4", "from": "server", "to": "local", "y": 310, "label": "服务端本地 Pregel 执行" },
+    { "id": "m5", "from": "local", "to": "server", "y": 350, "label": "产生流事件（values/updates）" },
+    { "id": "m6", "from": "server", "to": "http", "y": 390, "label": "SSE 事件流回传", "variant": "emphasis" },
+    { "id": "m7", "from": "http", "to": "rg", "y": 440, "label": "解码 ProtocolEvent" },
+
+    { "id": "m8", "from": "rg", "to": "client", "y": 600, "label": "返回最终状态 / 迭代器", "variant": "return" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "同一协议", "items": ["RemoteGraph 实现 PregelProtocol", "本地远端接口一致", "线协议 v3 适配"] },
+    { "dot": "cyan", "title": "边界", "items": ["LangGraph Server 不在本仓库源码", "debug 事件映射本地消费", "draw_graph 本地绘制"] }
+  ]
+}

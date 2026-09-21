@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "cli-tooling 域：CLI 工具链组件拓扑",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1180, 680]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "终端用户", "sublabel": "langgraph 命令", "pos": [40, 300], "size": [130, 64] },
+    { "id": "entry", "type": "frontend", "label": "click 入口", "sublabel": "cli()", "pos": [230, 290], "size": [150, 64] },
+    { "id": "dispatch", "type": "backend", "label": "命令分发", "sublabel": "NestedHelpGroup", "pos": [440, 290], "size": [170, 64] },
+    { "id": "config", "type": "backend", "label": "配置加载", "sublabel": "config.py/schemas.py", "pos": [700, 130], "size": [170, 64] },
+    { "id": "build", "type": "backend", "label": "镜像构建", "sublabel": "docker.py", "pos": [700, 290], "size": [160, 64] },
+    { "id": "deploy", "type": "backend", "label": "部署执行", "sublabel": "deploy.py", "pos": [700, 450], "size": [160, 64] },
+    { "id": "docker", "type": "external", "label": "Docker 守护进程", "sublabel": "buildx（外部）", "pos": [970, 290], "size": [160, 64] },
+    { "id": "remote", "type": "cloud", "label": "远程平台", "sublabel": "registry/GCS（外部）", "pos": [970, 450], "size": [160, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "本仓库源码内（cli 包）", "wraps": ["entry", "dispatch", "config", "build", "deploy"] },
+    { "kind": "security-group", "label": "外部系统（不在本仓库源码内）", "wraps": ["docker", "remote"] }
+  ],
+  "connections": [
+    { "id": "u-e", "from": "user", "to": "entry", "label": "argv", "variant": "emphasis" },
+    { "id": "e-d", "from": "entry", "to": "dispatch", "label": "调用", "variant": "emphasis" },
+    { "id": "d-cfg", "from": "dispatch", "to": "config", "label": "校验配置", "fromSide": "right", "toSide": "left" },
+    { "id": "d-build", "from": "dispatch", "to": "build", "label": "build 命令", "fromSide": "right", "toSide": "left" },
+    { "id": "d-deploy", "from": "dispatch", "to": "deploy", "label": "deploy 命令", "fromSide": "right", "toSide": "left" },
+    { "id": "build-dk", "from": "build", "to": "docker", "label": "subp_exec" },
+    { "id": "deploy-remote", "from": "deploy", "to": "remote", "label": "HTTPS 推送" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "域职责", "items": [
+      "click 入口注册子命令矩阵",
+      "配置加载与校验贯穿全局",
+      "镜像构建与远程部署分离"
+    ] },
+    { "dot": "cyan", "title": "边界", "items": [
+      "Docker 守护进程与远程平台为外部",
+      "HostBackendClient 封装远程调用"
+    ] }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Pregel 超级步执行状态机",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1180, 640]
+  },
+  "lanes": [
+    { "id": "main", "label": "超级步主循环" },
+    { "id": "terminal", "label": "终止出口" }
+  ],
+  "states": [
+    { "id": "init", "type": "start", "label": "载入 checkpoint", "sublabel": "__enter__", "lane": "main", "col": 0, "tag": "start" },
+    { "id": "plan", "type": "decision", "label": "计划 prepare", "sublabel": "prepare_next_tasks", "lane": "main", "col": 1, "tag": "gate" },
+    { "id": "execute", "type": "active", "label": "并发执行节点", "sublabel": "PregelRunner.tick", "lane": "main", "col": 2, "tag": "running" },
+    { "id": "update", "type": "active", "label": "apply_writes", "sublabel": "更新通道版本", "lane": "main", "col": 3, "tag": "running" },
+    { "id": "checkpoint", "type": "active", "label": "保存 checkpoint", "sublabel": "_put_checkpoint", "lane": "main", "col": 4, "tag": "persist" },
+    { "id": "interrupt", "type": "waiting", "label": "中断", "sublabel": "interrupt_before/after", "lane": "terminal", "col": 1, "tag": "pause" },
+    { "id": "done", "type": "success", "label": "完成", "sublabel": "无待触发通道", "lane": "terminal", "col": 2, "tag": "terminal" }
+  ],
+  "transitions": [
+    { "from": "init", "to": "plan", "variant": "emphasis" },
+    { "from": "plan", "to": "execute", "variant": "emphasis" },
+    { "from": "execute", "to": "update", "variant": "emphasis" },
+    { "from": "update", "to": "interrupt", "variant": "dashed", "route": "straight", "fromSide": "bottom", "toSide": "top" },
+    { "from": "update", "to": "checkpoint", "variant": "emphasis" },
+    { "from": "checkpoint", "to": "done", "variant": "dashed", "route": "straight", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "BSP 三阶段", "items": ["计划：选出被触发节点", "执行：并发且互相不可见", "更新：步末统一提交通道"] },
+    { "dot": "amber", "title": "超级步循环", "items": ["保存 checkpoint 后回到 plan", "直至无待触发通道 → done", "节点失败可路由 error_handler", "超 step 上限 → out_of_steps"] }
+  ]
+}

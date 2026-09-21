@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "托管值 ManagedValue",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1500, 560]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "state 字段", "sublabel": "Annotated[bool, IsLastStep]", "pos": [40, 240], "size": [180, 64] },
+    { "id": "abc", "type": "backend", "label": "ManagedValue ABC", "sublabel": "managed/base.py:18", "pos": [340, 230], "size": [160, 80] },
+    { "id": "impl", "type": "backend", "label": "IsLastStep / RemainingSteps", "sublabel": "managed/is_last_step.py", "pos": [620, 230], "size": [180, 80] },
+    { "id": "pad", "type": "backend", "label": "PregelScratchpad", "sublabel": "_internal/_scratchpad.py", "pos": [920, 230], "size": [160, 80] },
+    { "id": "node", "type": "external", "label": "节点读取", "sublabel": "运行期注入", "pos": [1200, 240], "size": [140, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "managed 托管值（本叶子）", "wraps": ["abc", "impl"] }
+  ],
+  "connections": [
+    { "id": "u-a", "from": "user", "to": "abc", "label": "注册 spec", "variant": "emphasis" },
+    { "id": "a-i", "from": "abc", "to": "impl", "label": "get()" },
+    { "id": "i-p", "from": "impl", "to": "pad", "label": "读 step/stop", "variant": "emphasis" },
+    { "id": "p-n", "from": "pad", "to": "node", "label": "注入值", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "语义", "items": ["IsLastStep: step == stop-1", "RemainingSteps: stop - step", "值由引擎派生，不持久化", "Annotated 标记即注册"] }
+  ]
+}

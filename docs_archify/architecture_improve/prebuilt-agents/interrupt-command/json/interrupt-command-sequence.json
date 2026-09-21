@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "interrupt-command：人机中断与恢复生命周期",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1080, 620],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "用户", "sublabel": "客户端" },
+    { "id": "pregel", "type": "backend", "label": "Pregel 运行时", "sublabel": "types.py" },
+    { "id": "node", "type": "backend", "label": "图节点", "sublabel": "调 interrupt()" },
+    { "id": "ckpt", "type": "database", "label": "checkpointer", "sublabel": "外部持久化" }
+  ],
+  "segments": [
+    { "from": 150, "to": 340, "label": "首次执行 → 中断" },
+    { "from": 370, "to": 540, "label": "恢复执行" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "pregel", "y": 160, "label": "invoke(input, config)", "variant": "emphasis" },
+    { "id": "m2", "from": "pregel", "to": "node", "y": 200, "label": "执行节点" },
+    { "id": "m3", "from": "node", "to": "pregel", "y": 240, "label": "interrupt(value) 抛 GraphInterrupt", "variant": "return" },
+    { "id": "m4", "from": "pregel", "to": "ckpt", "y": 280, "label": "持久化检查点" },
+    { "id": "m5", "from": "pregel", "to": "user", "y": 320, "label": "Interrupt(value, id)", "variant": "return" },
+    { "id": "m6", "from": "user", "to": "pregel", "y": 380, "label": "invoke(Command(resume=...), config)" },
+    { "id": "m7", "from": "pregel", "to": "ckpt", "y": 420, "label": "加载检查点" },
+    { "id": "m8", "from": "pregel", "to": "node", "y": 460, "label": "从头重执行节点" },
+    { "id": "m9", "from": "node", "to": "pregel", "y": 500, "label": "interrupt() 返回 resume 值", "variant": "return" },
+    { "id": "m10", "from": "pregel", "to": "user", "y": 535, "label": "最终结果", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "pregel", "from": 160, "to": 320, "type": "backend" },
+    { "participant": "pregel", "from": 380, "to": 535, "type": "backend" }
+  ]
+}

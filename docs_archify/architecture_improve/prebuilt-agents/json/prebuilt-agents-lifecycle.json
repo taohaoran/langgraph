@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "prebuilt-agents 域：ReAct 执行循环状态机",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1080, 620]
+  },
+  "lanes": [
+    { "id": "main", "label": "Agent 执行会话" }
+  ],
+  "states": [
+    { "id": "start", "type": "start", "label": "启动", "lane": "main", "col": 0, "step": "01" },
+    { "id": "callllm", "type": "active", "label": "调用模型", "sublabel": "chat 生成", "lane": "main", "col": 1, "step": "02" },
+    { "id": "calltool", "type": "active", "label": "调用工具", "sublabel": "ToolNode 执行", "lane": "main", "col": 2, "step": "03" },
+    { "id": "done", "type": "success", "label": "完成", "sublabel": "无工具调用", "lane": "main", "col": 3, "step": "04" }
+  ],
+  "transitions": [
+    { "id": "t1", "from": "start", "to": "callllm" },
+    { "id": "t2", "from": "callllm", "to": "calltool" },
+    { "id": "t3", "from": "calltool", "to": "callllm", "label": "继续循环", "variant": "emphasis", "fromSide": "top", "toSide": "top", "via": [[740, 70], [320, 70]] },
+    { "id": "t4", "from": "callllm", "to": "done", "fromSide": "bottom", "toSide": "bottom", "via": [[320, 540], [860, 540]] }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "ReAct 循环", "items": [
+      "模型与工具节点条件循环",
+      "interrupt 中断/恢复见 interrupt-command 叶子",
+      "工具异常重试见叶子错误处理"
+    ] }
+  ]
+}

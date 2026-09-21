@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "core-runtime invoke 数据管道",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1320, 680]
+  },
+  "stages": [
+    { "label": "输入" },
+    { "label": "编译" },
+    { "label": "超级步执行" },
+    { "label": "持久化" },
+    { "label": "流式输出" }
+  ],
+  "nodes": [
+    { "id": "input", "type": "external", "label": "用户输入", "sublabel": "input + config", "stage": 0, "row": 0 },
+    { "id": "compile", "type": "backend", "label": "StateGraph.compile", "sublabel": "graph-state-api", "stage": 1, "row": 0 },
+    { "id": "loop", "type": "backend", "label": "PregelLoop", "sublabel": "超级步循环", "stage": 2, "row": 0 },
+    { "id": "node", "type": "backend", "label": "节点函数", "sublabel": "并发执行", "stage": 2, "row": 1 },
+    { "id": "saver", "type": "database", "label": "CheckpointSaver", "sublabel": "Memory/PG/SQLite", "stage": 3, "row": 1 },
+    { "id": "mux", "type": "messagebus", "label": "StreamMux", "sublabel": "模式投影", "stage": 4, "row": 0 },
+    { "id": "output", "type": "external", "label": "最终状态", "sublabel": "values/updates", "stage": 4, "row": 1 }
+  ],
+  "flows": [
+    { "from": "input", "to": "compile", "label": "建图", "variant": "emphasis", "route": "straight" },
+    { "from": "compile", "to": "loop", "label": "CompiledStateGraph", "variant": "emphasis", "route": "straight" },
+    { "from": "loop", "to": "node", "label": "就绪节点", "variant": "emphasis", "route": "vertical-channel" },
+    { "from": "node", "to": "saver", "label": "writes", "route": "straight" },
+    { "from": "saver", "to": "loop", "label": "恢复", "variant": "dashed", "route": "straight", "labelDy": 24 },
+    { "from": "loop", "to": "mux", "label": "ProtocolEvent", "variant": "emphasis", "route": "straight" },
+    { "from": "mux", "to": "output", "label": "投影事件", "variant": "emphasis", "route": "vertical-channel" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "端到端数据流", "items": ["输入→编译→超级步→持久化→流输出", "每超级步读写一次 checkpoint", "执行同时经 StreamMux 投影"] },
+    { "dot": "cyan", "title": "边界", "items": ["CheckpointSaver 后端不在本仓库", "节点函数为用户/外部逻辑", "langchain_core 为第三方依赖"] }
+  ]
+}

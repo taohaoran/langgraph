@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "一次 graph.invoke() 端到端时序",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1220, 800],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "用户", "sublabel": "应用" },
+    { "id": "gapi", "type": "backend", "label": "StateGraph", "sublabel": "建图/编译" },
+    { "id": "loop", "type": "backend", "label": "PregelLoop", "sublabel": "超级步循环" },
+    { "id": "node", "type": "backend", "label": "节点函数", "sublabel": "并发执行" },
+    { "id": "saver", "type": "database", "label": "CheckpointSaver", "sublabel": "持久化" },
+    { "id": "stream", "type": "messagebus", "label": "StreamMux", "sublabel": "流式投影" }
+  ],
+  "segments": [
+    { "from": 130, "to": 260, "label": "编译期" },
+    { "from": 290, "to": 460, "label": "超级步执行（BSP）" },
+    { "from": 560, "to": 710, "label": "完成与流式返回" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "gapi", "y": 160, "label": "add_node/add_edge + compile()", "variant": "emphasis" },
+    { "id": "m2", "from": "gapi", "to": "loop", "y": 220, "label": "invoke(input, config)", "variant": "emphasis" },
+
+    { "id": "m3", "from": "loop", "to": "saver", "y": 320, "label": "get_tuple 恢复 checkpoint" },
+    { "id": "m4", "from": "loop", "to": "node", "y": 360, "label": "PregelRunner 并发执行就绪节点", "variant": "emphasis" },
+    { "id": "m5", "from": "node", "to": "loop", "y": 400, "label": "返回通道写入 writes", "variant": "return" },
+    { "id": "m6", "from": "loop", "to": "saver", "y": 445, "label": "put（步末持久化）", "variant": "emphasis" },
+
+    { "id": "m7", "from": "loop", "to": "stream", "y": 590, "label": "ProtocolEvent 进 StreamMux", "variant": "emphasis" },
+    { "id": "m8", "from": "stream", "to": "user", "y": 635, "label": "投影事件（values/updates/debug）", "variant": "emphasis" },
+    { "id": "m9", "from": "loop", "to": "user", "y": 690, "label": "返回最终状态", "variant": "return" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "BSP 闭环", "items": ["计划→并发执行→合并写入→持久化", "每超级步写一次 checkpoint", "直至无待触发通道"] },
+    { "dot": "cyan", "title": "流式并行", "items": ["执行同时经 StreamMux 投影", "values/updates/debug 多模式", "背压由调用者 pump"] }
+  ]
+}

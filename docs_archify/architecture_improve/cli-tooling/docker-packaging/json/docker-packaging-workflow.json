@@ -1,0 +1,25 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "docker-packaging：镜像构建与推送流程",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "lanes": [
+    { "id": "cli", "label": "CLI 配置生成" },
+    { "id": "build", "label": "本地构建" },
+    { "id": "ext", "label": "外部系统" }
+  ],
+  "nodes": [
+    { "id": "start", "type": "external", "lane": "cli", "col": 0, "label": "配置就位" },
+    { "id": "gen", "type": "backend", "lane": "cli", "col": 1, "label": "生成文件" },
+    { "id": "build", "type": "backend", "lane": "build", "col": 2, "label": "构建镜像" },
+    { "id": "push", "type": "cloud", "lane": "ext", "col": 3, "label": "推送镜像" }
+  ],
+  "edges": [
+    { "from": "start", "to": "gen", "label": "读取配置", "variant": "emphasis" },
+    { "from": "gen", "to": "build", "label": "DockerBuildPlan" },
+    { "from": "build", "to": "push", "label": "镜像就绪" }
+  ]
+}

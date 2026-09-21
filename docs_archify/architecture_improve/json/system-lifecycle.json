@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "图执行生命周期",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1180, 680]
+  },
+  "lanes": [
+    { "id": "main", "label": "执行主路径" },
+    { "id": "terminal", "label": "中断出口" }
+  ],
+  "states": [
+    { "id": "created", "type": "start", "label": "已创建", "sublabel": "graph.compile", "lane": "main", "col": 0, "tag": "start" },
+    { "id": "restoring", "type": "active", "label": "恢复检查点", "sublabel": "PregelLoop.init", "lane": "main", "col": 1, "tag": "restore" },
+    { "id": "superstep", "type": "active", "label": "超级步执行", "sublabel": "BSP 循环", "lane": "main", "col": 2, "tag": "running" },
+    { "id": "streaming", "type": "active", "label": "流式输出", "sublabel": "stream_mode", "lane": "main", "col": 3, "tag": "output" },
+    { "id": "completed", "type": "success", "label": "完成", "sublabel": "返回最终状态", "lane": "main", "col": 4, "tag": "terminal" },
+    { "id": "interrupted", "type": "waiting", "label": "中断等待", "sublabel": "interrupt()", "lane": "terminal", "col": 1, "tag": "pause" }
+  ],
+  "transitions": [
+    { "from": "created", "to": "restoring", "variant": "emphasis" },
+    { "from": "restoring", "to": "superstep", "variant": "emphasis" },
+    { "from": "superstep", "to": "streaming", "variant": "emphasis" },
+    { "from": "streaming", "to": "completed", "variant": "emphasis" },
+    { "from": "superstep", "to": "interrupted", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "主路径", "items": ["编译→恢复→超级步→流式输出→完成", "超级步内 BSP 三阶段循环", "每步末持久化 checkpoint"] },
+    { "dot": "amber", "title": "中断与异常", "items": ["interrupt() 在超级步间暂停", "Command 恢复可跳转节点", "节点失败可重试或路由 error_handler"] }
+  ]
+}

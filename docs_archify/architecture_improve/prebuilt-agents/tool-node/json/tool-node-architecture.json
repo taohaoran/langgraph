@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "tool-node：ToolNode 工具执行节点结构",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [
+      1080,
+      560
+    ]
+  },
+  "components": [
+    {
+      "id": "agent",
+      "type": "external",
+      "label": "agent 节点",
+      "sublabel": "产出 tool_calls",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "toolnode",
+      "type": "backend",
+      "label": "ToolNode",
+      "sublabel": "_func/_afunc",
+      "pos": [
+        290,
+        280
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "lookup",
+      "type": "backend",
+      "label": "tools_by_name",
+      "sublabel": "按名查表",
+      "pos": [
+        560,
+        160
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "inject",
+      "type": "backend",
+      "label": "依赖注入",
+      "sublabel": "InjectedState/Store/Runtime",
+      "pos": [
+        560,
+        330
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "tools",
+      "type": "external",
+      "label": "工具函数",
+      "sublabel": "外部实现",
+      "pos": [
+        860,
+        280
+      ],
+      "size": [
+        150,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1",
+      "from": "agent",
+      "to": "toolnode",
+      "label": "tool_calls",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "c2",
+      "from": "toolnode",
+      "to": "lookup",
+      "label": "查工具",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "c3",
+      "from": "toolnode",
+      "to": "inject",
+      "label": "注入",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "c4",
+      "from": "inject",
+      "to": "tools",
+      "label": "调用",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "并行执行",
+      "items": [
+        "同步用 get_executor_for_config.map",
+        "异步用 asyncio.gather 并发"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "依赖注入",
+      "items": [
+        "InjectedState 注入图状态",
+        "InjectedStore / ToolRuntime 注入运行时"
+      ]
+    }
+  ]
+}

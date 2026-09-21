@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "sdk-python 域：Python SDK 组件拓扑",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1440, 720]
+  },
+  "components": [
+    { "id": "app", "type": "external", "label": "应用代码", "sublabel": "get_client / get_sync_client", "pos": [30, 300], "size": [150, 60] },
+
+    { "id": "async_client", "type": "backend", "label": "LangGraphClient", "sublabel": "_async/client.py", "pos": [250, 180], "size": [160, 60], "tag": "异步轨" },
+    { "id": "sync_client", "type": "backend", "label": "SyncLangGraphClient", "sublabel": "_sync/client.py", "pos": [250, 420], "size": [160, 60], "tag": "同步轨" },
+
+    { "id": "http", "type": "backend", "label": "HttpClient", "sublabel": "HTTP 方法 + SSE 流", "pos": [500, 180], "size": [150, 60] },
+    { "id": "http_sync", "type": "backend", "label": "SyncHttpClient", "sublabel": "同步镜像", "pos": [500, 420], "size": [150, 60] },
+
+    { "id": "resources", "type": "backend", "label": "资源客户端", "sublabel": "五类资源", "pos": [740, 300], "size": [160, 60], "tag": "Assistants/Threads/Runs/Crons/Store" },
+    { "id": "stream", "type": "backend", "label": "StreamController", "sublabel": "v3 扇出 + 解码", "pos": [740, 130], "size": [160, 60] },
+    { "id": "shared", "type": "backend", "label": "_shared 工具", "sublabel": "API Key / orjson", "pos": [740, 470], "size": [160, 60] },
+
+    { "id": "auth", "type": "security", "label": "Auth / Encryption", "sublabel": "服务端扩展注册", "pos": [990, 180], "size": [160, 60] },
+    { "id": "errors", "type": "backend", "label": "errors / sse / cache", "sublabel": "类型化错误 + SSE + SWR", "pos": [990, 420], "size": [160, 60] },
+
+    { "id": "server", "type": "cloud", "label": "LangGraph API", "sublabel": "外部服务", "pos": [1230, 300], "size": [110, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "客户端层（_async / _sync 双轨）", "wraps": ["async_client", "sync_client", "http", "http_sync", "resources", "shared"] },
+    { "kind": "region", "label": "流式管道（stream/）", "wraps": ["stream"] },
+    { "kind": "region", "label": "服务端扩展与运行时工具", "wraps": ["auth", "errors"] },
+    { "kind": "security-group", "label": "外部（不在本仓库源码内）", "wraps": ["server"] }
+  ],
+  "connections": [
+    { "id": "app-a", "from": "app", "to": "async_client", "label": "异步", "variant": "emphasis" },
+    { "id": "app-s", "from": "app", "to": "sync_client", "label": "同步", "variant": "dashed" },
+    { "id": "a-http", "from": "async_client", "to": "http", "label": "注入" },
+    { "id": "s-http", "from": "sync_client", "to": "http_sync", "label": "注入", "variant": "dashed" },
+    { "id": "http-res", "from": "http", "to": "resources", "label": "委托" },
+    { "id": "http-srv", "from": "resources", "to": "server", "label": "HTTP / SSE", "variant": "emphasis" },
+    { "id": "sync-srv", "from": "http_sync", "to": "server", "label": "HTTP", "variant": "dashed" },
+    { "id": "stream-http", "from": "stream", "to": "http", "label": "复用 SSE", "variant": "dashed" },
+    { "id": "shared-http", "from": "shared", "to": "http", "label": "共享工具", "variant": "dashed" },
+    { "id": "errors-http", "from": "errors", "to": "http", "label": "类型化错误", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "双轨架构", "items": [
+      "_async 与 _sync 同名同构，仅 async/await 差异",
+      "_shared 收敛无差异逻辑（API Key/orjson/转义）",
+      "每顶层客户端持有独立 httpx.Client"
+    ] },
+    { "dot": "cyan", "title": "分层职责", "items": [
+      "客户端层：工厂 + 双轨 + 资源矩阵",
+      "流式管道：v3 扇出 + 投影解码",
+      "扩展工具：Auth/Encryption 注册 + errors/sse/cache"
+    ] },
+    { "dot": "amber", "title": "外部边界", "items": [
+      "LangGraph API 远端 / 本机 loopback",
+      "httpx/orjson/websockets 第三方库",
+      "langgraph-api 中间件（服务端扩展调用方）"
+    ] }
+  ]
+}

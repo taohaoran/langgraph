@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "cli-tooling 域：一次 CLI 命令执行核心时序",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1120, 680],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "终端用户" },
+    { "id": "entry", "type": "frontend", "label": "click 入口" },
+    { "id": "dispatch", "type": "backend", "label": "命令分发" },
+    { "id": "config", "type": "backend", "label": "配置加载" },
+    { "id": "build", "type": "backend", "label": "镜像构建" },
+    { "id": "deploy", "type": "backend", "label": "部署执行" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "entry", "y": 165, "label": "langgraph build", "variant": "emphasis" },
+    { "id": "m2", "from": "entry", "to": "dispatch", "y": 215, "label": "路由子命令" },
+    { "id": "m3", "from": "dispatch", "to": "config", "y": 265, "label": "validate_config_file" },
+    { "id": "m4", "from": "config", "to": "dispatch", "y": 315, "label": "配置对象", "variant": "return" },
+    { "id": "m5", "from": "dispatch", "to": "build", "y": 375, "label": "build_docker_image" },
+    { "id": "m6", "from": "build", "to": "dispatch", "y": 435, "label": "镜像就绪", "variant": "return" },
+    { "id": "m7", "from": "dispatch", "to": "deploy", "y": 495, "label": "推送/部署" },
+    { "id": "m8", "from": "deploy", "to": "user", "y": 555, "label": "部署结果", "variant": "return" }
+  ]
+}

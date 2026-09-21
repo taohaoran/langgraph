@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pregel 执行引擎结构",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1600, 560]
+  },
+  "components": [
+    { "id": "invoker", "type": "external", "label": "调用方", "sublabel": "invoke/stream", "pos": [40, 240], "size": [120, 64] },
+    { "id": "pregel", "type": "backend", "label": "Pregel 门面", "sublabel": "pregel/main.py:450", "pos": [300, 230], "size": [150, 80], "tag": "Runnable" },
+    { "id": "loop", "type": "backend", "label": "PregelLoop", "sublabel": "_loop.py:158 超级步循环", "pos": [560, 230], "size": [150, 80] },
+    { "id": "runner", "type": "backend", "label": "PregelRunner", "sublabel": "_runner.py:135 并发调度", "pos": [820, 230], "size": [150, 80] },
+    { "id": "executor", "type": "cloud", "label": "后台执行器", "sublabel": "_executor.py 线程/异步池", "pos": [1080, 240], "size": [150, 64] },
+    { "id": "task", "type": "external", "label": "节点任务", "sublabel": "PregelExecutableTask", "pos": [1340, 240], "size": [140, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "pregel 执行引擎（本叶子）", "wraps": ["pregel", "loop", "runner", "executor"] }
+  ],
+  "connections": [
+    { "id": "i-p", "from": "invoker", "to": "pregel", "label": "调用", "variant": "emphasis" },
+    { "id": "p-l", "from": "pregel", "to": "loop", "label": "创建循环", "variant": "emphasis" },
+    { "id": "l-r", "from": "loop", "to": "runner", "label": "tick 执行", "variant": "emphasis" },
+    { "id": "r-e", "from": "runner", "to": "executor", "label": "submit" },
+    { "id": "e-t", "from": "executor", "to": "task", "label": "运行节点", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "BSP 算法", "items": ["prepare_next_tasks 计划", "并发执行选定节点", "apply_writes 更新通道", "_algo.py 纯函数"] },
+    { "dot": "amber", "title": "容错", "items": ["run_with_retry 退避重试", "RetryPolicy max_attempts/backoff", "节点 error_handler 路由", "step_timeout 超时取消"] }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pregel IO 与 Checkpoint",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1700, 560]
+  },
+  "components": [
+    { "id": "input", "type": "external", "label": "输入/输出", "sublabel": "用户 chunk", "pos": [40, 240], "size": [130, 64] },
+    { "id": "io", "type": "backend", "label": "输入输出映射", "sublabel": "_io.py map_input/output", "pos": [300, 230], "size": [160, 80] },
+    { "id": "write", "type": "backend", "label": "ChannelWrite", "sublabel": "_write.py:46 CONFIG_KEY_SEND", "pos": [560, 230], "size": [150, 80] },
+    { "id": "read", "type": "backend", "label": "ChannelRead / PregelNode", "sublabel": "_read.py:25/97 CONFIG_KEY_READ", "pos": [810, 230], "size": [170, 80] },
+    { "id": "ckpt", "type": "backend", "label": "checkpoint 构建", "sublabel": "_checkpoint.py create/hydrate", "pos": [1070, 230], "size": [160, 80] },
+    { "id": "saver", "type": "database", "label": "BaseCheckpointSaver", "sublabel": "外部库 checkpoint", "pos": [1330, 240], "size": [160, 64] },
+    { "id": "stream", "type": "external", "label": "消息/工具流", "sublabel": "_messages/_tools 回调", "pos": [1330, 400], "size": [160, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "pregel IO 与 checkpoint（本叶子）", "wraps": ["io", "write", "read", "ckpt"] }
+  ],
+  "connections": [
+    { "id": "i-io", "from": "input", "to": "io", "label": "chunk", "variant": "emphasis" },
+    { "id": "io-w", "from": "io", "to": "write", "label": "pending writes" },
+    { "id": "w-r", "from": "write", "to": "read", "label": "节点输入/输出", "variant": "dashed" },
+    { "id": "r-ck", "from": "read", "to": "ckpt", "label": "通道状态" },
+    { "id": "ck-s", "from": "ckpt", "to": "saver", "label": "put/get", "variant": "emphasis" },
+    { "id": "ck-st", "from": "ckpt", "to": "stream", "label": "事件", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "读写桥", "items": ["ChannelWrite→CONFIG_KEY_SEND", "ChannelRead→CONFIG_KEY_READ", "Send→TASKS 通道", "Command→goto/resume/update"] },
+    { "dot": "amber", "title": "DeltaChannel", "items": ["仅存 seed 快照 blob", "缺值时回放祖先 writes", "get_delta_channel_history", "LATEST_VERSION=4"] }
+  ]
+}

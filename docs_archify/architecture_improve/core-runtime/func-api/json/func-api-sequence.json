@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "@entrypoint/@task 函数式 API 调用链",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1180, 720],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "用户函数", "sublabel": "@entrypoint/@task" },
+    { "id": "entry", "type": "backend", "label": "entrypoint 装饰器", "sublabel": "func/__init__.py" },
+    { "id": "build", "type": "backend", "label": "自动建图", "sublabel": "单节点 Pregel" },
+    { "id": "pregel", "type": "backend", "label": "Pregel", "sublabel": "执行引擎" },
+    { "id": "call", "type": "backend", "label": "_call_with_options", "sublabel": "pregel/_call.py" }
+  ],
+  "segments": [
+    { "from": 130, "to": 250, "label": "装饰期" },
+    { "from": 280, "to": 460, "label": "调用期 invoke" },
+    { "from": 520, "to": 620, "label": "@task 子任务" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "entry", "y": 160, "label": "@entrypoint 装饰普通函数", "variant": "emphasis" },
+    { "id": "m2", "from": "entry", "to": "build", "y": 195, "label": "START: EphemeralValue → 函数 → END", "variant": "emphasis" },
+    { "id": "m3", "from": "build", "to": "pregel", "y": 235, "label": "实例化 Pregel（继承执行引擎）" },
+
+    { "id": "m4", "from": "user", "to": "entry", "y": 310, "label": "fn.invoke(args, config)", "variant": "emphasis" },
+    { "id": "m5", "from": "entry", "to": "pregel", "y": 350, "label": "转发到 Pregel.invoke", "variant": "emphasis" },
+    { "id": "m6", "from": "pregel", "to": "user", "y": 400, "label": "返回 final[R] 结果", "variant": "return" },
+
+    { "id": "m7", "from": "user", "to": "call", "y": 555, "label": "@task 调用 → _call_with_options", "variant": "emphasis" },
+    { "id": "m8", "from": "call", "to": "user", "y": 605, "label": "返回 Future（可并行 await）", "variant": "return" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "函数→图", "items": ["装饰器把函数编译成单节点 Pregel", "PREVIOUS 通道保存上次值", "final[R,S] 注解决定返回/保存"] },
+    { "dot": "cyan", "title": "@task 并发", "items": ["_TaskFunction 包装", "Future 可并行 await", "支持 retry/cache/timeout"] }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "sdk-auth-encryption：服务端扩展注册与运行时工具",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1200, 640]
+  },
+  "components": [
+    { "id": "app", "type": "external", "label": "用户代码", "sublabel": "auth.py / encryption.py", "pos": [30, 300], "size": [140, 60] },
+
+    { "id": "auth", "type": "backend", "label": "Auth", "sublabel": "认证 + on.* 授权注册", "pos": [260, 170], "size": [160, 75], "tag": "服务端扩展" },
+    { "id": "enc", "type": "backend", "label": "Encryption", "sublabel": "blob/json 加解密（beta）", "pos": [260, 410], "size": [160, 75] },
+
+    { "id": "errors", "type": "backend", "label": "错误类型", "sublabel": "errors.py 层级", "pos": [500, 90], "size": [150, 55] },
+    { "id": "sse", "type": "backend", "label": "SSE 解码", "sublabel": "sse.py", "pos": [500, 200], "size": [150, 55] },
+    { "id": "cache", "type": "backend", "label": "KV/SWR 缓存", "sublabel": "cache.py 薄封装", "pos": [500, 310], "size": [150, 55] },
+
+    { "id": "server", "type": "cloud", "label": "langgraph-api", "sublabel": "中间件加载调用（外部）", "pos": [760, 240], "size": [180, 80] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "服务端扩展（langgraph.json 加载）", "wraps": ["auth", "enc"] },
+    { "kind": "region", "label": "运行时工具", "wraps": ["errors", "sse", "cache"] },
+    { "kind": "security-group", "label": "外部（不在本仓库源码内）", "wraps": ["server"] }
+  ],
+  "connections": [
+    { "id": "a-auth", "from": "app", "to": "auth", "label": "@authenticate / @on.*", "variant": "emphasis" },
+    { "id": "a-enc", "from": "app", "to": "enc", "label": "@encrypt.blob/json" },
+    { "id": "auth-s", "from": "auth", "to": "server", "label": "每请求调用", "variant": "emphasis", "labelDy": 32 },
+    { "id": "enc-s", "from": "enc", "to": "server", "label": "落库前/后调用" },
+    { "id": "cache-s", "from": "cache", "to": "server", "label": "代理缓存", "variant": "dashed" },
+    { "id": "errors-s", "from": "errors", "to": "sse", "label": "", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "授权匹配顺序", "items": [
+      "resource+action 精确 > resource 通配 > 全局",
+      "返回 None/True 放行，False 拒 403，dict 作过滤",
+      "store 操作改写 namespace 到用户身份"
+    ] },
+    { "dot": "amber", "title": "加解密约束", "items": [
+      "JSON 加解密必须保持 key 不变",
+      "解密侧不能依赖 ctx.model/field",
+      "API 为 beta，重复注册抛 DuplicateHandlerError"
+    ] },
+    { "dot": "cyan", "title": "运行时工具", "items": [
+      "errors：400/401/403/404/429 类型化",
+      "sse：BytesLineDecoder + SSEDecoder",
+      "cache：仅服务端可用，缺 langgraph_api 抛错"
+    ] }
+  ]
+}

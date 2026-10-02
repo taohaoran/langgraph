@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Pregel 超级步执行状态机",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "pregel-engine-lifecycle.html",
+    "viewBox": [1080, 620]
+  },
+  "lanes": [
+    { "id": "main", "label": "一次 run 的超步循环" }
+  ],
+  "states": [
+    { "id": "start", "type": "start", "label": "开始", "lane": "main", "col": 0 },
+    { "id": "planning", "type": "active", "label": "规划任务", "lane": "main", "col": 1 },
+    { "id": "executing", "type": "active", "label": "并发执行", "lane": "main", "col": 2 },
+    { "id": "updating", "type": "active", "label": "归约通道", "lane": "main", "col": 3 },
+    { "id": "checkpointing", "type": "active", "label": "落检查点", "lane": "main", "col": 4 },
+    { "id": "done", "type": "success", "label": "结束", "lane": "main", "col": 4, "yOffset": 130 },
+    { "id": "interrupted", "type": "waiting", "label": "中断挂起", "lane": "main", "col": 3, "yOffset": 130 }
+  ],
+  "transitions": [
+    { "from": "start", "to": "planning", "label": "构造 loop" },
+    { "from": "planning", "to": "executing", "label": "prepare_next_tasks 有任务" },
+    { "from": "planning", "to": "done", "label": "无任务" },
+    { "from": "executing", "to": "updating", "label": "全部完成" },
+    { "from": "executing", "to": "interrupted", "label": "interrupt 命中" },
+    { "from": "updating", "to": "checkpointing", "label": "apply_writes" },
+    { "from": "checkpointing", "to": "planning", "label": "还有任务，下一超步" },
+    { "from": "checkpointing", "to": "done", "label": "落盘完成" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "BSP 语义", "items": ["执行期写不可见", "超步末统一 apply_writes", "无任务或达上限即停"] }
+  ]
+}

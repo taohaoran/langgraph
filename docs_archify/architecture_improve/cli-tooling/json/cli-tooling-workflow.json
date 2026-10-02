@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "langgraph deploy 部署工作流（域级）",
+    "output": "cli-tooling-workflow.html",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1080, 720]
+  },
+  "lanes": [
+    { "id": "user", "label": "开发者" },
+    { "id": "cli", "label": "CLI 进程" },
+    { "id": "docker", "label": "Docker 构建" },
+    { "id": "platform", "label": "远端平台" },
+    { "id": "fail", "label": "失败回退", "variant": "exception" }
+  ],
+  "nodes": [
+    { "id": "start", "lane": "user", "col": 0, "type": "external", "label": "执行 deploy" },
+    { "id": "config-dep", "lane": "cli", "col": 1, "type": "frontend", "label": "校验配置与依赖", "sublabel": "config+uv" },
+    { "id": "build", "lane": "docker", "col": 2, "type": "backend", "label": "构建镜像", "sublabel": "docker.py" },
+    { "id": "push", "lane": "cli", "col": 3, "type": "backend", "label": "归档推送", "sublabel": "archive" },
+    { "id": "deploy", "lane": "platform", "col": 4, "type": "external", "label": "创建并轮询", "sublabel": "部署就绪" },
+    { "id": "err", "lane": "fail", "col": 3, "type": "security", "label": "报错退出码 1" }
+  ],
+  "edges": [
+    { "from": "start", "to": "config-dep", "label": "触发", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "config-dep", "to": "build", "label": "生成构建参数", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "build", "to": "push", "label": "镜像就绪", "variant": "emphasis", "route": "drop", "fromSide": "top", "toSide": "bottom" },
+    { "from": "push", "to": "deploy", "label": "上传部署", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "config-dep", "to": "err", "label": "校验失败", "variant": "security", "role": "error", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "deploy", "to": "err", "label": "部署超时", "variant": "security", "role": "error", "route": "drop", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "mainPath": ["start", "config-dep", "build", "push", "deploy"],
+  "cards": [
+    { "dot": "cyan", "title": "流程要点", "items": ["校验失败与部署超时走失败泳道", "部署状态机由远端平台承载", "进度条与日志输出由 progress 模块驱动"] },
+    { "dot": "emerald", "title": "错误语义", "items": ["校验失败立即 SystemExit(1)", "部署轮询超时按策略重试", "错误原因通过日志通道展示"] }
+  ]
+}

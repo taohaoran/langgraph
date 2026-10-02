@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "托管值注入节点调用时序",
+    "output": "managed-values-sequence.html",
+    "viewBox": [1080, 560],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "participants": [
+    { "id": "schema", "type": "frontend", "label": "状态 Schema", "sublabel": "用户定义" },
+    { "id": "hydrate", "type": "backend", "label": "hydrate_channels", "sublabel": "_checkpoint" },
+    { "id": "loop", "type": "backend", "label": "Pregel 循环", "sublabel": "_algo" },
+    { "id": "mgr", "type": "backend", "label": "Manager.get", "sublabel": "托管值实现" },
+    { "id": "node", "type": "external", "label": "用户节点", "sublabel": "业务函数" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "schema", "to": "hydrate", "y": 160, "label": "Annotated[bool, IsLastStep]", "variant": "emphasis" },
+    { "id": "m2", "from": "hydrate", "to": "loop", "y": 200, "label": "拆分出 managed_specs", "variant": "return" },
+    { "id": "m3", "from": "loop", "to": "mgr", "y": 250, "label": "managed[k].get(scratchpad)", "variant": "emphasis" },
+    { "id": "m4", "from": "mgr", "to": "loop", "y": 290, "label": "返回 step==stop-1 等", "variant": "return" },
+    { "id": "m5", "from": "loop", "to": "node", "y": 340, "label": "合并进节点输入 values", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "注入链", "items": [
+      "编译期识别托管字段并归档",
+      "运行期每步从上下文派生",
+      "节点输入合并后调用"
+    ] }
+  ]
+}

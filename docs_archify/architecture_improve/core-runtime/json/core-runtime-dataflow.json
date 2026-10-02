@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "core-runtime 状态与消息数据流",
+    "output": "core-runtime-dataflow.html",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1160, 620]
+  },
+  "stages": [
+    { "label": "输入" },
+    { "label": "图编译" },
+    { "label": "执行循环" },
+    { "label": "持久化与流" },
+    { "label": "输出" }
+  ],
+  "nodes": [
+    { "id": "user-input", "type": "frontend", "label": "用户输入", "sublabel": "input + config", "stage": 0, "row": 0 },
+    { "id": "stategraph", "type": "backend", "label": "StateGraph 编译", "sublabel": "节点/边/通道", "stage": 1, "row": 0 },
+    { "id": "channels-def", "type": "backend", "label": "通道实例化", "sublabel": "按 schema 建通道", "stage": 1, "row": 1 },
+    { "id": "pregel-loop", "type": "backend", "label": "PregelLoop", "sublabel": "超级步 tick", "stage": 2, "row": 0 },
+    { "id": "node-exec", "type": "backend", "label": "节点并发执行", "sublabel": "PregelRunner", "stage": 2, "row": 1 },
+    { "id": "managed-inject", "type": "backend", "label": "托管值注入", "sublabel": "ManagedValue", "stage": 2, "row": 2 },
+    { "id": "checkpoint-io", "type": "database", "label": "checkpoint 读写", "sublabel": "pregel-io", "stage": 3, "row": 0 },
+    { "id": "stream-events", "type": "messagebus", "label": "流事件生成", "sublabel": "values/updates/debug", "stage": 3, "row": 1 },
+    { "id": "output", "type": "frontend", "label": "最终状态/流", "sublabel": "输出给用户", "stage": 4, "row": 0 }
+  ],
+  "flows": [
+    { "from": "user-input", "to": "stategraph", "label": "输入状态", "classification": "schema 校验", "variant": "emphasis" },
+    { "from": "stategraph", "to": "channels-def", "label": "通道定义", "classification": "类型注解", "variant": "default", "labelDy": 25 },
+    { "from": "stategraph", "to": "pregel-loop", "label": "编译为 Pregel 图", "classification": "编译产物", "variant": "emphasis" },
+    { "from": "pregel-loop", "to": "node-exec", "label": "就绪任务", "classification": "调度", "variant": "default", "route": "vertical-channel", "labelDx": -50 },
+    { "from": "node-exec", "to": "pregel-loop", "label": "通道写入", "classification": "writes", "variant": "default", "route": "vertical-channel", "labelDx": 50 },
+    { "from": "pregel-loop", "to": "checkpoint-io", "label": "每步持久化", "classification": "checkpoint tuple", "variant": "default", "labelDy": 20 },
+    { "from": "pregel-loop", "to": "stream-events", "label": "流事件", "classification": "状态增量", "variant": "emphasis" },
+    { "from": "stream-events", "to": "output", "label": "转换输出", "classification": "SSE/迭代器", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "状态真相源", "items": ["通道是状态唯一真相源，节点读写通道通信", "channel 定义由 StateGraph schema 自动实例化", "BinaryOperatorAggregate 承载 add_messages 累加语义"] },
+    { "dot": "emerald", "title": "可恢复性", "items": ["每超级步结束持久化 checkpoint", "恢复时经 pregel-io 重建通道（卡片说明）", "interrupt 挂起/恢复不丢状态"] }
+  ]
+}

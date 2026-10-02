@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "langgraph deploy 部署链",
+    "output": "cli-tooling-sequence.html",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1120, 640],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "开发者" },
+    { "id": "cli-core", "type": "frontend", "label": "cli-core", "sublabel": "命令分发" },
+    { "id": "deploy-exec", "type": "backend", "label": "deploy/exec", "sublabel": "部署编排" },
+    { "id": "docker-packaging", "type": "backend", "label": "docker-packaging", "sublabel": "镜像构建" },
+    { "id": "platform", "type": "external", "label": "LangGraph 平台", "sublabel": "远端" }
+  ],
+  "segments": [
+    { "from": 160, "to": 390, "label": "本地构建" },
+    { "from": 410, "to": 540, "label": "远端部署" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "cli-core", "y": 180, "label": "langgraph deploy", "variant": "emphasis" },
+    { "id": "m2", "from": "cli-core", "to": "deploy-exec", "y": 225, "label": "解析配置与依赖", "variant": "default" },
+    { "id": "m3", "from": "deploy-exec", "to": "docker-packaging", "y": 270, "label": "构建镜像", "variant": "emphasis" },
+    { "id": "m4", "from": "docker-packaging", "to": "deploy-exec", "y": 320, "label": "镜像就绪", "variant": "return" },
+    { "id": "m5", "from": "deploy-exec", "to": "platform", "y": 425, "label": "上传并创建部署", "variant": "emphasis" },
+    { "id": "m6", "from": "platform", "to": "deploy-exec", "y": 460, "label": "部署确认", "variant": "return" },
+    { "id": "m7", "from": "deploy-exec", "to": "cli-core", "y": 495, "label": "轮询状态返回", "variant": "return" },
+    { "id": "m8", "from": "cli-core", "to": "user", "y": 530, "label": "部署完成", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "deploy-exec", "from": 225, "to": 495, "type": "backend" },
+    { "participant": "docker-packaging", "from": 270, "to": 320, "type": "backend" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "本地构建", "items": ["配置校验失败立即退出码 1", "uv 依赖锁定生成构建环境", "docker.py 拼装 compose 参数"] },
+    { "dot": "emerald", "title": "远端部署", "items": ["构建产物归档后上传", "轮询直到部署进入就绪状态", "失败分支报错退出（见工作流图）"] }
+  ]
+}

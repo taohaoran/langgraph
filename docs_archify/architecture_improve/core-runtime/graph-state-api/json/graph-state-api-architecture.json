@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "图构建与编译层架构图",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "graph-state-api-architecture.html",
+    "viewBox": [1000, 480]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "用户代码", "pos": [60, 60], "size": [140, 60] },
+    { "id": "stategraph", "type": "backend", "label": "StateGraph", "pos": [330, 60], "size": [180, 60], "tag": "构建器" },
+    { "id": "messagegraph", "type": "backend", "label": "MessageGraph", "pos": [60, 190], "size": [160, 56] },
+    { "id": "node", "type": "backend", "label": "StateNodeSpec", "pos": [330, 190], "size": [160, 56] },
+    { "id": "branch", "type": "backend", "label": "BranchSpec", "pos": [560, 190], "size": [160, 56] },
+    { "id": "send", "type": "external", "label": "Send / Command", "pos": [60, 320], "size": [160, 56] },
+    { "id": "compiled", "type": "backend", "label": "CompiledStateGraph", "pos": [330, 320], "size": [190, 60], "tag": "可执行图" },
+    { "id": "pregel", "type": "external", "label": "Pregel 引擎", "pos": [580, 320], "size": [160, 56] },
+    { "id": "channels", "type": "external", "label": "channels 原语", "pos": [800, 320], "size": [160, 56] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "图构建与编译层（graph/）", "wraps": ["stategraph", "messagegraph", "node", "branch", "compiled"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "user", "to": "stategraph", "label": "add_node / add_edge", "variant": "emphasis" },
+    { "id": "c2", "from": "messagegraph", "to": "stategraph", "label": "继承", "variant": "dashed" },
+    { "id": "c3", "from": "stategraph", "to": "node", "label": "注册节点规格" },
+    { "id": "c4", "from": "stategraph", "to": "branch", "label": "注册条件分支" },
+    { "id": "c5", "from": "send", "to": "stategraph", "label": "分支返回 Send/Command", "variant": "dashed" },
+    { "id": "c6", "from": "stategraph", "to": "compiled", "label": "compile()", "variant": "emphasis" },
+    { "id": "c7", "from": "compiled", "to": "pregel", "label": "继承并驱动" },
+    { "id": "c8", "from": "compiled", "to": "channels", "label": "实例化通道" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "构建期 vs 运行期", "items": ["StateGraph 只建不跑", "compile 产出可执行图", "运行权移交 Pregel", "通道由 schema 派生"] }
+  ]
+}

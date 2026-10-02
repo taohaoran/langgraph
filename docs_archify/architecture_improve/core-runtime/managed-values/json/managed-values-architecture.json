@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "托管值 ManagedValue 架构图",
+    "output": "managed-values-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "components": [
+    { "id": "schema", "type": "frontend", "label": "用户状态 Schema", "sublabel": "Annotated 注解", "pos": [60, 90], "size": [160, 64] },
+    { "id": "split", "type": "backend", "label": "hydrate_channels", "sublabel": "拆分 managed_specs", "pos": [340, 90], "size": [170, 64] },
+    { "id": "abc", "type": "backend", "label": "ManagedValue 基类", "sublabel": "managed/base.py", "pos": [340, 250], "size": [170, 64] },
+    { "id": "islast", "type": "backend", "label": "IsLastStepManager", "sublabel": "最后一步为真", "pos": [60, 410], "size": [160, 60] },
+    { "id": "remain", "type": "backend", "label": "RemainingStepsMgr", "sublabel": "剩余步数", "pos": [260, 410], "size": [160, 60] },
+    { "id": "scratch", "type": "backend", "label": "PregelScratchpad", "sublabel": "step/stop 上下文", "pos": [560, 250], "size": [160, 64] },
+    { "id": "inject", "type": "backend", "label": "_algo 注入输入", "sublabel": "managed[k].get", "pos": [560, 410], "size": [170, 64] },
+    { "id": "node", "type": "external", "label": "用户节点函数", "sublabel": "只读不可写", "pos": [560, 560], "size": [160, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "managed/ 包（本叶子）", "wraps": ["abc", "islast", "remain"] },
+    { "kind": "region", "label": "Pregel 引擎（注入方）", "wraps": ["split", "inject"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "schema", "to": "split", "label": "字段注解", "variant": "emphasis" },
+    { "id": "c2", "from": "split", "to": "abc", "label": "按类归档" },
+    { "id": "c3", "from": "abc", "to": "islast", "label": "继承" },
+    { "id": "c4", "from": "abc", "to": "remain", "label": "继承" },
+    { "id": "c5", "from": "scratch", "to": "inject", "label": "每步新建", "variant": "emphasis" },
+    { "id": "c6", "from": "islast", "to": "inject", "label": ".get(scratchpad)" },
+    { "id": "c7", "from": "remain", "to": "inject", "label": ".get(scratchpad)" },
+    { "id": "c8", "from": "inject", "to": "node", "label": "运行期值注入", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "核心要点", "items": [
+      "值由引擎从 scratchpad 派生",
+      "不落 checkpoint、不进通道",
+      "节点只读，不可写回"
+    ] }
+  ]
+}

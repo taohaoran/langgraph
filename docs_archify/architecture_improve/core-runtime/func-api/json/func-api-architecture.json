@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "函数式 API 架构图",
+    "output": "func-api-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "用户函数", "sublabel": "普通 py 函数", "pos": [60, 90], "size": [140, 60] },
+    { "id": "taskdec", "type": "backend", "label": "@task 装饰器", "sublabel": "func/__init__.py:110", "pos": [300, 60], "size": [160, 60] },
+    { "id": "tf", "type": "backend", "label": "_TaskFunction", "sublabel": "func/__init__.py:59", "pos": [300, 170], "size": [160, 60] },
+    { "id": "entrydec", "type": "backend", "label": "@entrypoint", "sublabel": "func/__init__.py:262", "pos": [300, 290], "size": [160, 60] },
+    { "id": "wrap", "type": "backend", "label": "get_runnable_for_*", "sublabel": "_call.py:175/200", "pos": [560, 290], "size": [160, 60] },
+    { "id": "pregel", "type": "backend", "label": "Pregel 单节点图", "sublabel": "func/__init__.py:576", "pos": [560, 410], "size": [160, 60] },
+    { "id": "ch", "type": "database", "label": "START/END/PREVIOUS", "sublabel": "通道", "pos": [560, 530], "size": [160, 60] },
+    { "id": "callimpl", "type": "backend", "label": "call 实现(注入)", "sublabel": "_call.py:289", "pos": [60, 290], "size": [160, 60] },
+    { "id": "fut", "type": "messagebus", "label": "SyncAsyncFuture", "sublabel": "_call.py:253", "pos": [60, 430], "size": [160, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "func/ 包（本叶子）", "wraps": ["taskdec", "tf", "entrydec"] },
+    { "kind": "region", "label": "Pregel 引擎（宿主）", "wraps": ["wrap", "pregel", "ch"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "user", "to": "taskdec", "label": "装饰", "variant": "emphasis" },
+    { "id": "c2", "from": "taskdec", "to": "tf", "label": "包装" },
+    { "id": "c3", "from": "user", "to": "entrydec", "label": "装饰" },
+    { "id": "c4", "from": "entrydec", "to": "wrap", "label": "转 Runnable" },
+    { "id": "c5", "from": "wrap", "to": "pregel", "label": "组装图" },
+    { "id": "c6", "from": "pregel", "to": "ch", "label": "读写" },
+    { "id": "c7", "from": "tf", "to": "callimpl", "label": "_call_with_options" },
+    { "id": "c8", "from": "callimpl", "to": "pregel", "label": "调度任务节点" },
+    { "id": "c9", "from": "tf", "to": "fut", "label": "立即返回", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "核心要点", "items": [
+      "entrypoint 把函数编译成单节点 Pregel",
+      "task 调用返回 future，异步入图",
+      "call 实现由运行图注入 config"
+    ] }
+  ]
+}

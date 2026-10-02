@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "sdk-python 域架构",
+    "output": "sdk-python-architecture.html",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1120, 800]
+  },
+  "components": [
+    { "id": "user-app", "type": "external", "label": "用户应用", "sublabel": "调用方", "pos": [20, 280], "size": [130, 60] },
+    { "id": "sdk-client", "type": "frontend", "label": "sdk-client", "sublabel": "Client 主类", "pos": [220, 90], "size": [200, 60], "tag": "client.py" },
+    { "id": "sdk-resources", "type": "backend", "label": "sdk-resources", "sublabel": "assistant/thread/run", "pos": [220, 240], "size": [200, 60], "tag": "runs.py" },
+    { "id": "sdk-stream", "type": "backend", "label": "sdk-stream", "sublabel": "流式控制器", "pos": [220, 390], "size": [200, 60], "tag": "stream/controller.py" },
+    { "id": "sdk-http", "type": "backend", "label": "sdk-http", "sublabel": "HTTP/SSE 封装", "pos": [220, 540], "size": [200, 60], "tag": "http.py" },
+    { "id": "sdk-auth-encryption", "type": "security", "label": "sdk-auth-encryption", "sublabel": "认证与加密", "pos": [220, 690], "size": [200, 60], "tag": "auth/*" },
+    { "id": "server", "type": "external", "label": "LangGraph Server", "sublabel": "REST/SSE API", "pos": [500, 340], "size": [180, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "SDK 客户端层 libs/sdk-py", "wraps": ["sdk-client", "sdk-resources", "sdk-stream", "sdk-http", "sdk-auth-encryption"] }
+  ],
+  "connections": [
+    { "id": "user-client", "from": "user-app", "to": "sdk-client", "label": "API 调用", "variant": "emphasis" },
+    { "id": "client-resources", "from": "sdk-client", "to": "sdk-resources", "label": "资源操作", "variant": "emphasis", "labelDy": 24 },
+    { "id": "client-stream", "from": "sdk-client", "to": "sdk-stream", "label": "流式运行", "variant": "emphasis" },
+    { "id": "resources-http", "from": "sdk-resources", "to": "sdk-http", "label": "HTTP 请求", "variant": "default", "labelDy": -28 },
+    { "id": "stream-http", "from": "sdk-stream", "to": "sdk-http", "label": "SSE 连接", "variant": "default", "labelDy": 24 },
+    { "id": "http-auth", "from": "sdk-http", "to": "sdk-auth-encryption", "label": "认证/加密", "variant": "security", "labelDy": 24 },
+    { "id": "http-server", "from": "sdk-http", "to": "server", "label": "REST/SSE", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "域职责", "items": ["同步/异步双轨 Client 与资源端点", "流式控制器解码多格式事件流", "http.py 统一请求与重试语义"] },
+    { "dot": "emerald", "title": "外部边界", "items": ["LangGraph Server 不在本仓库源码内", "认证支持 LangSmith/平台 API 密钥", "多游标缓冲处理并行运行事件"] }
+  ]
+}

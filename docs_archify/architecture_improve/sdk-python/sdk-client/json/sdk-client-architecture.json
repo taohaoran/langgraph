@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "sdk-client 组件架构图",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "sdk-client/sdk-client-architecture.html",
+    "viewBox": [1080, 560]
+  },
+  "components": [
+    { "id": "app", "type": "external", "label": "应用代码", "pos": [30, 250], "size": [110, 60] },
+    { "id": "factory", "type": "frontend", "label": "get_client", "sublabel": "get_sync_client", "pos": [180, 250], "size": [150, 60] },
+    { "id": "topclient", "type": "backend", "label": "LangGraphClient", "sublabel": "异步/同步双轨", "pos": [370, 250], "size": [160, 60] },
+    { "id": "http", "type": "backend", "label": "HttpClient", "sublabel": "请求封装", "pos": [580, 250], "size": [150, 60] },
+    { "id": "subs", "type": "backend", "label": "资源子客户端", "sublabel": "threads/runs 等", "pos": [580, 120], "size": [150, 60] },
+    { "id": "errors", "type": "backend", "label": "类型化错误", "sublabel": "errors.py", "pos": [580, 380], "size": [150, 60] },
+    { "id": "cache", "type": "backend", "label": "cache/swr", "sublabel": "服务端缓存", "pos": [370, 380], "size": [150, 60] },
+    { "id": "api", "type": "cloud", "label": "LangGraph API", "sublabel": "远端服务", "pos": [880, 250], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "sdk-py 客户端层", "wraps": ["factory", "topclient", "http", "subs", "errors", "cache"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "app", "to": "factory", "label": "创建", "variant": "emphasis" },
+    { "id": "c2", "from": "factory", "to": "topclient", "label": "组装" },
+    { "id": "c3", "from": "topclient", "to": "http", "label": "持有" },
+    { "id": "c4", "from": "topclient", "to": "subs", "label": "挂载", "fromSide": "top", "toSide": "bottom" },
+    { "id": "c5", "from": "subs", "to": "http", "label": "经 http 请求", "fromSide": "bottom", "toSide": "top" },
+    { "id": "c6", "from": "http", "to": "api", "label": "HTTP", "variant": "emphasis" },
+    { "id": "c7", "from": "http", "to": "errors", "label": "状态码映射", "fromSide": "bottom", "toSide": "top" },
+    { "id": "c8", "from": "topclient", "to": "cache", "label": "服务端缓存", "fromSide": "bottom", "toSide": "top", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "要点", "items": [
+      "异步/同步双轨：_async 与 _sync 镜像实现",
+      "url=None 时走进程内 ASGI transport",
+      "错误统一映射为类型化 SDK 异常"
+    ] }
+  ]
+}

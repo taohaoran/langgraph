@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "sdk-stream 组件架构图",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "sdk-stream/sdk-stream-architecture.html",
+    "viewBox": [1080, 520]
+  },
+  "components": [
+    { "id": "http", "type": "external", "label": "httpx 响应", "sublabel": "bytes chunk", "pos": [30, 240], "size": [140, 60] },
+    { "id": "line", "type": "backend", "label": "BytesLineDecoder", "pos": [220, 240], "size": [160, 60] },
+    { "id": "sse", "type": "backend", "label": "SSEDecoder", "pos": [420, 240], "size": [140, 60] },
+    { "id": "part", "type": "backend", "label": "StreamPart", "sublabel": "事件对象", "pos": [610, 240], "size": [130, 60] },
+    { "id": "ctrl", "type": "backend", "label": "StreamController", "sublabel": "订阅/去重", "pos": [790, 150], "size": [170, 60] },
+    { "id": "dec", "type": "backend", "label": "解码器组", "sublabel": "Data/Messages/...", "pos": [790, 300], "size": [170, 60] },
+    { "id": "app", "type": "external", "label": "消费者", "pos": [790, 420], "size": [170, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "sdk-py stream 解码层", "wraps": ["line", "sse", "part", "ctrl", "dec"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "http", "to": "line", "label": "chunk", "variant": "emphasis" },
+    { "id": "c2", "from": "line", "to": "sse", "label": "line", "variant": "emphasis" },
+    { "id": "c3", "from": "sse", "to": "part", "label": "解析", "variant": "emphasis" },
+    { "id": "c4", "from": "part", "to": "ctrl", "label": "分发", "fromSide": "right", "toSide": "left" },
+    { "id": "c5", "from": "part", "to": "dec", "label": "投影", "fromSide": "right", "toSide": "left" },
+    { "id": "c6", "from": "dec", "to": "app", "label": "事件", "fromSide": "bottom", "toSide": "top" },
+    { "id": "c7", "from": "ctrl", "to": "app", "label": "订阅流", "fromSide": "bottom", "toSide": "top", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "要点", "items": [
+      "字节→行→SSE 事件三级解码",
+      "按通道/命名空间投影",
+      "事件 ID 去重与断线续传"
+    ] }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "checkpoint-base 架构图",
+    "output": "checkpoint-base-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1440, 820]
+  },
+  "components": [
+    { "id": "pregel", "type": "external", "label": "Pregel 引擎", "pos": [60, 320], "size": [150, 64], "tag": "调用方" },
+    { "id": "base-saver", "type": "backend", "label": "BaseCheckpointSaver", "pos": [360, 300], "size": [200, 80], "tag": "抽象契约" },
+    { "id": "data-types", "type": "backend", "label": "Checkpoint 数据结构", "pos": [360, 440], "size": [200, 60], "tag": "Tuple/Metadata" },
+    { "id": "serde", "type": "backend", "label": "Serializer 序列化器", "pos": [640, 200], "size": [170, 60], "tag": "注入" },
+    { "id": "uuid6", "type": "backend", "label": "uuid6 单调ID", "pos": [640, 320], "size": [170, 60], "tag": "id.py" },
+    { "id": "mem-saver", "type": "backend", "label": "InMemorySaver", "pos": [640, 450], "size": [170, 70], "tag": "内存参考实现" },
+    { "id": "storage", "type": "database", "label": "三张内存表", "pos": [880, 450], "size": [160, 70], "tag": "storage/writes/blobs" },
+    { "id": "pg-be", "type": "external", "label": "Postgres 后端", "pos": [900, 180], "size": [150, 60], "tag": "不在本仓库" },
+    { "id": "sq-be", "type": "external", "label": "SQLite 后端", "pos": [900, 290], "size": [150, 60], "tag": "不在本仓库" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "契约与数据层", "wraps": ["base-saver", "data-types"] },
+    { "kind": "region", "label": "序列化与ID", "wraps": ["serde", "uuid6"] },
+    { "kind": "region", "label": "内存参考实现", "wraps": ["mem-saver", "storage"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "pregel", "to": "base-saver", "label": "put/get", "variant": "emphasis" },
+    { "id": "c2", "from": "base-saver", "to": "data-types", "label": "构造校验" },
+    { "id": "c3", "from": "base-saver", "to": "serde", "label": "dumps/loads_typed" },
+    { "id": "c4", "from": "base-saver", "to": "uuid6", "label": "生成 checkpoint_id" },
+    { "id": "c5", "from": "base-saver", "to": "mem-saver", "label": "继承覆写", "variant": "emphasis" },
+    { "id": "c6", "from": "mem-saver", "to": "storage", "label": "读写三张表", "variant": "emphasis" },
+    { "id": "c7", "from": "base-saver", "to": "pg-be", "label": "后端覆写", "variant": "dashed" },
+    { "id": "c8", "from": "base-saver", "to": "sq-be", "label": "后端覆写", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "要点", "items": [
+      "基类定义同步/异步双轨契约",
+      "InMemorySaver 异步直接委托同步",
+      "通道版本 V 由子类泛型决定",
+      "Postgres/SQLite 是外部后端"
+    ] }
+  ]
+}

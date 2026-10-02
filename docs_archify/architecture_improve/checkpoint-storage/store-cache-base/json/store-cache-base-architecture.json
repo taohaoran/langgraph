@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Store/Cache 抽象与实现架构",
+    "output": "store-cache-base-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1440, 800]
+  },
+  "components": [
+    { "id": "caller", "type": "external", "label": "调用方", "pos": [60, 330], "size": [140, 60] },
+    { "id": "storebase", "type": "backend", "label": "BaseStore 契约", "pos": [320, 150], "size": [170, 60], "tag": "batch/abatch" },
+    { "id": "batch", "type": "backend", "label": "AsyncBatchedStore", "pos": [320, 260], "size": [170, 56], "tag": "异步合并" },
+    { "id": "memstore", "type": "backend", "label": "InMemoryStore", "pos": [320, 370], "size": [170, 56] },
+    { "id": "cachebase", "type": "backend", "label": "BaseCache 契约", "pos": [640, 150], "size": [170, 60], "tag": "get/set/clear" },
+    { "id": "memcache", "type": "backend", "label": "InMemoryCache", "pos": [640, 260], "size": [170, 56] },
+    { "id": "rediscache", "type": "backend", "label": "RedisCache", "pos": [640, 370], "size": [170, 56] },
+    { "id": "serde", "type": "backend", "label": "Serializer", "pos": [940, 260], "size": [150, 56] },
+    { "id": "redis", "type": "cloud", "label": "Redis", "pos": [1160, 370], "size": [140, 60], "tag": "外部服务" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Store 能力缝", "wraps": ["storebase", "batch", "memstore"] },
+    { "kind": "region", "label": "Cache 能力缝", "wraps": ["cachebase", "memcache", "rediscache"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "caller", "to": "storebase", "label": "get/put/search", "variant": "emphasis" },
+    { "id": "c2", "from": "caller", "to": "cachebase", "label": "get/set" },
+    { "id": "c3", "from": "batch", "to": "storebase", "label": "装饰合并" },
+    { "id": "c4", "from": "storebase", "to": "memstore", "label": "实现" },
+    { "id": "c5", "from": "cachebase", "to": "memcache", "label": "实现" },
+    { "id": "c6", "from": "cachebase", "to": "rediscache", "label": "实现" },
+    { "id": "c7", "from": "memcache", "to": "serde", "label": "编解码" },
+    { "id": "c8", "from": "rediscache", "to": "serde", "label": "编解码" },
+    { "id": "c9", "from": "rediscache", "to": "redis", "label": "mget/pipeline" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "要点", "items": [
+      "BaseStore/BaseCache 双契约族",
+      "Op 值对象按类型分派 batch",
+      "Redis 不可用静默降级",
+      "异步批合并减少往返"
+    ] }
+  ]
+}

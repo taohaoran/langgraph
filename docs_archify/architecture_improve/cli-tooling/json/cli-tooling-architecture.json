@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "cli-tooling 域架构",
+    "output": "cli-tooling-architecture.html",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1100, 700]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "开发者", "sublabel": "终端用户", "pos": [20, 250], "size": [130, 60] },
+    { "id": "cli-core", "type": "frontend", "label": "cli-core", "sublabel": "命令分发/配置", "pos": [220, 160], "size": [190, 60], "tag": "cli.py" },
+    { "id": "cli-deploy-exec", "type": "backend", "label": "deploy/exec", "sublabel": "部署与执行", "pos": [220, 340], "size": [190, 60], "tag": "deploy.py" },
+    { "id": "docker-packaging", "type": "backend", "label": "docker-packaging", "sublabel": "镜像构建", "pos": [220, 520], "size": [190, 60], "tag": "docker.py" },
+    { "id": "sdk-py", "type": "external", "label": "langgraph SDK", "sublabel": "libs/sdk-py", "pos": [480, 100], "size": [160, 50] },
+    { "id": "platform", "type": "external", "label": "LangGraph 平台", "sublabel": "远端服务", "pos": [480, 260], "size": [160, 50] },
+    { "id": "docker-engine", "type": "external", "label": "Docker 引擎", "sublabel": "外部", "pos": [480, 420], "size": [160, 50] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "CLI 层 libs/cli", "wraps": ["cli-core", "cli-deploy-exec", "docker-packaging"] }
+  ],
+  "connections": [
+    { "id": "user-core", "from": "user", "to": "cli-core", "label": "执行命令", "variant": "emphasis" },
+    { "id": "core-deploy", "from": "cli-core", "to": "cli-deploy-exec", "label": "命令分发", "variant": "emphasis", "labelDy": 24 },
+    { "id": "deploy-docker", "from": "cli-deploy-exec", "to": "docker-packaging", "label": "构建镜像", "variant": "emphasis", "labelDy": 24 },
+    { "id": "deploy-platform", "from": "cli-deploy-exec", "to": "platform", "label": "部署 API", "variant": "emphasis" },
+    { "id": "docker-engine-c", "from": "docker-packaging", "to": "docker-engine", "label": "docker 调用", "variant": "default" },
+    { "id": "core-sdk", "from": "cli-core", "to": "sdk-py", "label": "SDK 依赖", "variant": "default" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "域职责", "items": ["typer 命令分发与配置校验", "deploy/exec 构建产物上传并轮询部署", "docker.py 拼装镜像构建参数"] },
+    { "dot": "emerald", "title": "外部边界", "items": ["LangGraph 平台与 Docker 引擎不在本仓库源码内", "sdk-py 为另一域（libs/sdk-py）", "解析器环境（uv）按需加载"] }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "单个通道在超步内的生命周期",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "channels-lifecycle.html",
+    "viewBox": [1080, 620]
+  },
+  "lanes": [
+    { "id": "main", "label": "通道实例" }
+  ],
+  "states": [
+    { "id": "initial", "type": "start", "label": "空（MISSING）", "lane": "main", "col": 0 },
+    { "id": "updated", "type": "active", "label": "已写入", "lane": "main", "col": 1 },
+    { "id": "available", "type": "active", "label": "可读取", "lane": "main", "col": 2 },
+    { "id": "consumed", "type": "active", "label": "已消费", "lane": "main", "col": 3 },
+    { "id": "finished", "type": "success", "label": "已完成", "lane": "main", "col": 4 }
+  ],
+  "transitions": [
+    { "from": "initial", "to": "updated", "label": "update(非空值)" },
+    { "from": "updated", "to": "available", "label": "get() 成功" },
+    { "from": "available", "to": "consumed", "label": "consume() 订阅任务已跑" },
+    { "from": "available", "to": "finished", "label": "finish() 运行收尾" },
+    { "from": "consumed", "to": "initial", "label": "下一超步重置" },
+    { "from": "finished", "to": "initial", "label": "consume 后清空" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "状态语义", "items": ["空：从未写入或已清", "已写入：本超步收到值", "可读取：get 不抛错", "已消费：防重复触发"] }
+  ]
+}

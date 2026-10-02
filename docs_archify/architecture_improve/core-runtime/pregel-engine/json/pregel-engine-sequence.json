@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Pregel invoke 调用链时序",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "pregel-engine-sequence.html",
+    "viewBox": [1080, 760]
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "用户代码" },
+    { "id": "pregel", "type": "backend", "label": "Pregel" },
+    { "id": "loop", "type": "backend", "label": "PregelLoop" },
+    { "id": "runner", "type": "backend", "label": "PregelRunner" },
+    { "id": "worker", "type": "external", "label": "节点/executor" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "pregel", "y": 180, "label": "invoke(input)", "variant": "emphasis" },
+    { "id": "m2", "from": "pregel", "to": "loop", "y": 250, "label": "__enter__ + tick 超步循环" },
+    { "id": "m3", "from": "loop", "to": "runner", "y": 320, "label": "tick(tasks)", "variant": "emphasis" },
+    { "id": "m4", "from": "runner", "to": "worker", "y": 390, "label": "submit 并发执行节点" },
+    { "id": "m5", "from": "worker", "to": "runner", "y": 460, "label": "commit(writes)", "variant": "return" },
+    { "id": "m6", "from": "loop", "to": "pregel", "y": 520, "label": "apply_writes 后产出 chunk", "variant": "return" },
+    { "id": "m7", "from": "pregel", "to": "user", "y": 590, "label": "返回最终输出", "variant": "return" }
+  ]
+}

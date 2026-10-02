@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "interrupt 与 resume 交互时序",
+    "output": "interrupt-command-sequence.html",
+    "viewBox": [1080, 560],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "participants": [
+    { "id": "node", "type": "external", "label": "用户节点", "sublabel": "执行中" },
+    { "id": "fn", "type": "backend", "label": "interrupt()", "sublabel": "types.py:851" },
+    { "id": "ckpt", "type": "database", "label": "checkpointer", "sublabel": "持久化" },
+    { "id": "client", "type": "external", "label": "调用方", "sublabel": "人工输入" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "node", "to": "fn", "y": 160, "label": "interrupt(question)", "variant": "emphasis" },
+    { "id": "m2", "from": "fn", "to": "ckpt", "y": 205, "label": "无 resume → 抛 GraphInterrupt" },
+    { "id": "m3", "from": "ckpt", "to": "client", "y": 250, "label": "暂停，暴露 Interrupt", "variant": "return" },
+    { "id": "m4", "from": "client", "to": "fn", "y": 310, "label": "Command(resume=answer)", "variant": "emphasis" },
+    { "id": "m5", "from": "fn", "to": "node", "y": 360, "label": "节点重跑，interrupt 返回 answer", "variant": "return" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "交互要点", "items": [
+      "首次调用抛异常暂停",
+      "恢复时节点从头重跑",
+      "interrupt 第 N 次返回第 N 个 resume 值"
+    ] }
+  ]
+}

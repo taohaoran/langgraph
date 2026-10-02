@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "含中断的运行生命周期",
+    "output": "interrupt-command-lifecycle.html",
+    "viewBox": [
+      1030,
+      620
+    ],
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "运行主路径"
+    },
+    {
+      "id": "wait",
+      "label": "人工等待"
+    }
+  ],
+  "states": [
+    {
+      "id": "run",
+      "type": "start",
+      "label": "执行中",
+      "sublabel": "图推进",
+      "lane": "main",
+      "col": 0
+    },
+    {
+      "id": "interrupted",
+      "type": "waiting",
+      "label": "已中断",
+      "sublabel": "等待人工输入",
+      "lane": "wait",
+      "col": 1
+    },
+    {
+      "id": "resume",
+      "type": "active",
+      "label": "恢复重跑",
+      "sublabel": "节点从头重执行",
+      "lane": "main",
+      "col": 2
+    },
+    {
+      "id": "done",
+      "type": "success",
+      "label": "运行完成",
+      "sublabel": "END",
+      "lane": "main",
+      "col": 3
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t1",
+      "from": "run",
+      "to": "interrupted",
+      "label": "interrupt() 首次",
+      "variant": "security"
+    },
+    {
+      "id": "t2",
+      "from": "interrupted",
+      "to": "resume",
+      "label": "Command(resume)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "t3",
+      "from": "resume",
+      "to": "run",
+      "label": "继续后续节点"
+    },
+    {
+      "id": "t4",
+      "from": "run",
+      "to": "done",
+      "label": "正常结束"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "生命周期要点",
+      "items": [
+        "中断是可恢复的等待态",
+        "恢复时节点整体重跑",
+        "多次 interrupt 按序配对"
+      ]
+    }
+  ]
+}

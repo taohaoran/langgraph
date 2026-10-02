@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ReAct Agent 执行器架构图",
+    "output": "chat-agent-executor-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "用户输入",
+      "sublabel": "messages",
+      "pos": [
+        60,
+        110
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "factory",
+      "type": "backend",
+      "label": "create_react_agent",
+      "sublabel": ":278",
+      "pos": [
+        320,
+        110
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "state",
+      "type": "database",
+      "label": "AgentState",
+      "sublabel": "messages 列表",
+      "pos": [
+        320,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "call_model 节点",
+      "sublabel": ":661",
+      "pos": [
+        590,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "llm",
+      "type": "cloud",
+      "label": "LLM",
+      "sublabel": "外部模型",
+      "pos": [
+        590,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "cont",
+      "type": "backend",
+      "label": "should_continue",
+      "sublabel": ":831 条件边",
+      "pos": [
+        590,
+        410
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "tools",
+      "type": "backend",
+      "label": "ToolNode",
+      "sublabel": "执行工具",
+      "pos": [
+        320,
+        410
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "chat_agent_executor（本叶子）",
+      "wraps": [
+        "factory",
+        "state",
+        "agent",
+        "cont",
+        "tools"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1",
+      "from": "user",
+      "to": "factory",
+      "label": "组装",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c2",
+      "from": "factory",
+      "to": "state",
+      "label": "定义图"
+    },
+    {
+      "id": "c3",
+      "from": "state",
+      "to": "agent",
+      "label": "messages"
+    },
+    {
+      "id": "c4",
+      "from": "agent",
+      "to": "llm",
+      "label": "invoke",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c5",
+      "from": "llm",
+      "to": "agent",
+      "label": "AIMessage",
+      "variant": "default"
+    },
+    {
+      "id": "c6",
+      "from": "agent",
+      "to": "cont",
+      "label": "追加消息"
+    },
+    {
+      "id": "c7",
+      "from": "cont",
+      "to": "tools",
+      "label": "有 tool_calls"
+    },
+    {
+      "id": "c8",
+      "from": "tools",
+      "to": "agent",
+      "label": "回灌 ToolMessage",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "ReAct 要点",
+      "items": [
+        "agent 与 tools 两节点循环",
+        "有 tool_calls 才进 tools",
+        "无 tool_calls 则 END"
+      ]
+    }
+  ]
+}

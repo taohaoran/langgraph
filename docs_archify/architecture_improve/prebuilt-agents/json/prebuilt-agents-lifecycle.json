@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "ReAct agent 执行状态机（域级）",
+    "output": "prebuilt-agents-lifecycle.html",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1100, 620]
+  },
+  "lanes": [
+    { "id": "main", "label": "ReAct 主循环" }
+  ],
+  "states": [
+    { "id": "waiting", "type": "start", "label": "等待输入", "sublabel": "messages", "lane": "main", "col": 0 },
+    { "id": "thinking", "type": "active", "label": "模型推理", "sublabel": "call_model", "lane": "main", "col": 1 },
+    { "id": "decide", "type": "decision", "label": "是否需工具", "sublabel": "should_continue", "lane": "main", "col": 2 },
+    { "id": "acting", "type": "active", "label": "执行工具", "sublabel": "ToolNode", "lane": "main", "col": 3 },
+    { "id": "interrupted", "type": "failure", "label": "挂起", "sublabel": "interrupt()", "lane": "main", "col": 3, "yOffset": 130 },
+    { "id": "done", "type": "success", "label": "完成", "sublabel": "END", "lane": "main", "col": 4 }
+  ],
+  "transitions": [
+    { "id": "t1", "from": "waiting", "to": "thinking", "label": "用户输入", "variant": "emphasis", "labelAt": [171, 203] },
+    { "id": "t2", "from": "thinking", "to": "decide", "label": "得到 AIMessage", "labelAt": [325, 117] },
+    { "id": "t3", "from": "decide", "to": "done", "label": "无 tool_calls", "labelDy": 77 },
+    { "id": "t4", "from": "decide", "to": "acting", "label": "有 tool_calls", "labelDy": 77 },
+    { "id": "t5", "from": "acting", "to": "thinking", "label": "ToolMessage 回灌", "variant": "emphasis", "route": "bottom-channel" },
+    { "id": "t6", "from": "thinking", "to": "interrupted", "label": "interrupt() 触发", "labelDy": 30 },
+    { "id": "t7", "from": "interrupted", "to": "thinking", "label": "Command 恢复", "route": "bottom-channel" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "循环语义", "items": ["思考→行动循环直到不再调工具", "recursion_limit 约束循环深度", "v2 按 tool_call 并行 Send"] },
+    { "dot": "emerald", "title": "挂起/恢复", "items": ["interrupt 在超级步之间挂起", "挂起时 checkpoint 已持久化", "Command(resume/goto/update) 恢复"] }
+  ]
+}

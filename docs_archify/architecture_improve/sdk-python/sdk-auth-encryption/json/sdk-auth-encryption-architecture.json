@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "sdk-auth-encryption 组件架构图",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "sdk-auth-encryption/sdk-auth-encryption-architecture.html",
+    "viewBox": [1080, 520]
+  },
+  "components": [
+    { "id": "req", "type": "external", "label": "HTTP 请求", "pos": [30, 240], "size": [120, 60] },
+    { "id": "server", "type": "cloud", "label": "LangGraph Server", "sublabel": "服务端加载", "pos": [210, 240], "size": [160, 60] },
+    { "id": "auth", "type": "backend", "label": "Auth", "sublabel": "认证+授权", "pos": [430, 130], "size": [150, 60] },
+    { "id": "enc", "type": "backend", "label": "Encryption", "sublabel": "at-rest 加解密", "pos": [430, 330], "size": [150, 60] },
+    { "id": "types", "type": "backend", "label": "types/exceptions", "sublabel": "类型契约", "pos": [660, 130], "size": [160, 60] },
+    { "id": "userh", "type": "external", "label": "用户注册的处理器", "sublabel": "@on/@encrypt", "pos": [660, 300], "size": [170, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "sdk-py auth/encryption 契约层", "wraps": ["auth", "enc", "types"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "req", "to": "server", "label": "请求", "variant": "emphasis" },
+    { "id": "c2", "from": "server", "to": "auth", "label": "认证授权", "fromSide": "top", "toSide": "bottom" },
+    { "id": "c3", "from": "server", "to": "enc", "label": "加解密", "fromSide": "bottom", "toSide": "top" },
+    { "id": "c4", "from": "auth", "to": "types", "label": "引用", "fromSide": "right", "toSide": "left" },
+    { "id": "c5", "from": "auth", "to": "userh", "label": "调用处理器", "fromSide": "bottom", "toSide": "top", "variant": "dashed" },
+    { "id": "c6", "from": "enc", "to": "userh", "label": "调用处理器", "fromSide": "right", "toSide": "left" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "要点", "items": [
+      "Auth/Encryption 是可插拔处理器注册表",
+      "由服务端在请求/落库时回调",
+      "JSON 加密须保持 key 不变"
+    ] }
+  ]
+}

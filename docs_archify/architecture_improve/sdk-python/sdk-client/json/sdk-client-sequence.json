@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "sdk-client：一次资源请求链时序",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "sdk-client/sdk-client-sequence.html",
+    "viewBox": [1080, 680],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "app", "type": "external", "label": "应用代码" },
+    { "id": "client", "type": "backend", "label": "LangGraphClient" },
+    { "id": "sub", "type": "backend", "label": "资源子客户端" },
+    { "id": "http", "type": "backend", "label": "HttpClient" },
+    { "id": "err", "type": "backend", "label": "errors.py" },
+    { "id": "api", "type": "cloud", "label": "LangGraph API" }
+  ],
+  "segments": [
+    { "from": 150, "to": 280, "label": "一、创建客户端" },
+    { "from": 280, "to": 560, "label": "二、发请求与错误映射" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "app", "to": "client", "y": 170, "label": "get_client(url)", "variant": "emphasis" },
+    { "id": "m2", "from": "client", "to": "sub", "y": 215, "label": "挂载 assistants/threads/runs" },
+    { "id": "m3", "from": "app", "to": "sub", "y": 265, "label": "client.threads.get(id)", "variant": "emphasis" },
+    { "id": "m4", "from": "sub", "to": "http", "y": 315, "label": "GET /threads/{id}" },
+    { "id": "m5", "from": "http", "to": "api", "y": 355, "label": "HTTP 请求" },
+    { "id": "m6", "from": "api", "to": "http", "y": 395, "label": "响应", "variant": "return" },
+    { "id": "m7", "from": "http", "to": "err", "y": 440, "label": "status>=400?" },
+    { "id": "m8", "from": "err", "to": "http", "y": 480, "label": "类型化异常", "variant": "return" },
+    { "id": "m9", "from": "http", "to": "sub", "y": 525, "label": "解析 JSON", "variant": "return" },
+    { "id": "m10", "from": "sub", "to": "app", "y": 565, "label": "返回对象", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "client", "from": 170, "to": 215, "type": "backend" },
+    { "participant": "http", "from": 315, "to": 525, "type": "backend" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "健壮性", "items": [
+      "transport retries=5",
+      "默认超时 connect=5 read=300",
+      "orjson 解码错误体"
+    ] }
+  ]
+}

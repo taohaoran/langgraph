@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Sqlite put 写链时序",
+    "output": "checkpoint-sqlite-sequence.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "participants": [
+    { "id": "pregel", "type": "external", "label": "Pregel 引擎" },
+    { "id": "saver", "type": "backend", "label": "SqliteSaver" },
+    { "id": "serde", "type": "backend", "label": "Serializer" },
+    { "id": "db", "type": "database", "label": "SQLite" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "pregel", "to": "saver", "y": 170, "label": "put(config, ckpt, meta, versions)", "variant": "emphasis" },
+    { "id": "m2", "from": "saver", "to": "serde", "y": 255, "label": "dumps_typed(整份 ckpt)" },
+    { "id": "m3", "from": "saver", "to": "db", "y": 340, "label": "INSERT OR REPLACE checkpoints", "variant": "emphasis" },
+    { "id": "m4", "from": "db", "to": "saver", "y": 420, "label": "commit", "variant": "return" },
+    { "id": "m5", "from": "saver", "to": "pregel", "y": 500, "label": "返回 next_config", "variant": "return" }
+  ]
+}

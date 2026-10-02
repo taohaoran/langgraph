@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "checkpoint 持久化与恢复数据流",
+    "output": "checkpoint-storage-dataflow.html",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1160, 540]
+  },
+  "stages": [
+    { "label": "对象" },
+    { "label": "序列化" },
+    { "label": "记录" },
+    { "label": "存储与恢复" }
+  ],
+  "nodes": [
+    { "id": "state-object", "type": "frontend", "label": "图状态对象", "sublabel": "channels 快照", "stage": 0, "row": 0 },
+    { "id": "serializer", "type": "backend", "label": "序列化器族", "sublabel": "jsonplus/msgpack/加密", "stage": 1, "row": 0 },
+    { "id": "checkpoint-record", "type": "database", "label": "CheckpointTuple", "sublabel": "版本+字节+元数据", "stage": 2, "row": 0 },
+    { "id": "pg-store", "type": "database", "label": "Postgres/SQLite", "sublabel": "外部存储", "stage": 3, "row": 0 },
+    { "id": "restored-state", "type": "frontend", "label": "恢复状态", "sublabel": "重建通道", "stage": 3, "row": 1 }
+  ],
+  "flows": [
+    { "from": "state-object", "to": "serializer", "label": "序列化", "classification": "对象→字节", "variant": "emphasis" },
+    { "from": "serializer", "to": "checkpoint-record", "label": "字节封装", "classification": "checkpoint tuple", "variant": "default" },
+    { "from": "checkpoint-record", "to": "pg-store", "label": "写入", "classification": "upsert", "variant": "emphasis" },
+    { "from": "checkpoint-record", "to": "serializer", "label": "反序列化", "classification": "字节→对象", "variant": "default", "labelDy": -20 },
+    { "from": "pg-store", "to": "restored-state", "label": "恢复", "classification": "重建通道", "variant": "emphasis", "labelDy": 25 }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "写路径", "items": ["状态对象 → serde 序列化 → checkpoint tuple → 数据库", "每超级步一写；pending writes 支持增量合并", "版本号与 parent 链支撑时间旅行调试"] },
+    { "dot": "emerald", "title": "读路径", "items": ["数据库 → 反序列化 → 重建通道状态", "恢复链路：存储 → record → 反序列化 → 状态", "store/cache 提供长期记忆与命中缓存"] }
+  ]
+}

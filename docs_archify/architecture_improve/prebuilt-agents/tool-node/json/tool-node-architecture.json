@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ToolNode 工具执行架构图",
+    "output": "tool-node-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "components": [
+    { "id": "agent", "type": "external", "label": "上游 agent 节点", "sublabel": "发 tool_calls", "pos": [60, 250], "size": [150, 60] },
+    { "id": "tn", "type": "backend", "label": "ToolNode", "sublabel": "tool_node.py:622", "pos": [320, 250], "size": [140, 60] },
+    { "id": "reg", "type": "database", "label": "tools_by_name", "sublabel": "工具注册表", "pos": [320, 90], "size": [140, 60] },
+    { "id": "rt", "type": "backend", "label": "ToolRuntime", "sublabel": ":1663 注入包", "pos": [560, 90], "size": [150, 60] },
+    { "id": "inj", "type": "security", "label": "InjectedState/Store", "sublabel": "标注注入参数", "pos": [560, 250], "size": [160, 60] },
+    { "id": "exec", "type": "messagebus", "label": "executor.map / gather", "sublabel": "并行执行", "pos": [320, 410], "size": [160, 60] },
+    { "id": "tool", "type": "external", "label": "实际工具函数", "sublabel": "用户/第三方", "pos": [560, 410], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "tool_node.py（本叶子）", "wraps": ["tn", "reg", "rt", "inj", "exec"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "agent", "to": "tn", "label": "AIMessage.tool_calls", "variant": "emphasis" },
+    { "id": "c2", "from": "tn", "to": "reg", "label": "按名查工具" },
+    { "id": "c3", "from": "tn", "to": "rt", "label": "每 call 构造" },
+    { "id": "c4", "from": "rt", "to": "inj", "label": "注入 state/store" },
+    { "id": "c5", "from": "tn", "to": "exec", "label": "并行跑 _run_one", "variant": "emphasis" },
+    { "id": "c6", "from": "exec", "to": "tool", "label": "调用" },
+    { "id": "c7", "from": "tool", "to": "tn", "label": "合并 ToolMessage" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "核心要点", "items": [
+      "按 tool_call 名查注册表",
+      "ToolRuntime 注入 state/store/config",
+      "多 tool_call 并行执行后合并"
+    ] }
+  ]
+}

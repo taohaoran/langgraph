@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "LangGraph 系统架构总览（改进版）",
+    "output": "system-architecture.html",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1280, 790],
+    "views": [
+      { "id": "core", "label": "核心运行时", "focus": ["pregel-engine", "graph-state-api", "channels", "pregel-io"], "note": "Pregel BSP 引擎 + 图构建 + 通道原语 + checkpoint 读写" },
+      { "id": "storage", "label": "持久化矩阵", "focus": ["checkpoint-base", "checkpoint-serde", "store-cache-base", "backend-impls"], "note": "Checkpoint/Store/Cache 抽象 × 序列化族 × 多后端" }
+    ]
+  },
+  "components": [
+    { "id": "user-app", "type": "external", "label": "用户/应用", "sublabel": "调用方", "pos": [30, 300], "size": [130, 60] },
+
+    { "id": "cli", "type": "frontend", "label": "CLI 工具链", "sublabel": "langgraph-cli", "pos": [200, 150], "size": [140, 50] },
+    { "id": "sdk-py", "type": "frontend", "label": "Python SDK", "sublabel": "client/资源/流/http", "pos": [190, 340], "size": [140, 50] },
+
+    { "id": "prebuilt-api", "type": "backend", "label": "预构建 Agent API", "sublabel": "ReAct/ToolNode/interrupt", "pos": [380, 150], "size": [180, 50], "tag": "libs/prebuilt" },
+    { "id": "func-api", "type": "backend", "label": "函数式 API", "sublabel": "@entrypoint/@task", "pos": [360, 330], "size": [170, 50], "tag": "langgraph/func" },
+
+    { "id": "graph-state-api", "type": "backend", "label": "图构建 API", "sublabel": "StateGraph/分支/Send", "pos": [570, 70], "size": [190, 50], "tag": "langgraph/graph" },
+    { "id": "channels", "type": "backend", "label": "状态通道原语", "sublabel": "LastValue/Topic/Barrier", "pos": [570, 200], "size": [190, 50], "tag": "langgraph/channels" },
+    { "id": "pregel-engine", "type": "backend", "label": "Pregel 执行引擎", "sublabel": "BSP 超级步循环", "pos": [570, 330], "size": [190, 70], "tag": "langgraph/pregel" },
+    { "id": "pregel-io", "type": "backend", "label": "checkpoint 读写", "sublabel": "输入输出合并", "pos": [570, 470], "size": [190, 50], "tag": "pregel/_io" },
+
+    { "id": "managed-values", "type": "backend", "label": "托管值注入", "sublabel": "ManagedValue", "pos": [800, 470], "size": [150, 50], "tag": "langgraph/managed" },
+    { "id": "stream-framework", "type": "messagebus", "label": "多模式流框架", "sublabel": "values/updates/debug", "pos": [800, 330], "size": [170, 50], "tag": "langgraph/stream" },
+    { "id": "internal-foundation", "type": "backend", "label": "内部基础设施", "sublabel": "Runnable/serde/retry/config", "pos": [380, 500], "size": [180, 50], "tag": "langgraph/_internal" },
+
+    { "id": "checkpoint-base", "type": "database", "label": "Checkpoint 抽象", "sublabel": "BaseCheckpointSaver/Memory", "pos": [570, 610], "size": [180, 50], "tag": "libs/checkpoint" },
+    { "id": "checkpoint-serde", "type": "database", "label": "序列化器族", "sublabel": "jsonplus/msgpack/加密", "pos": [800, 610], "size": [180, 50], "tag": "checkpoint/serde" },
+    { "id": "store-cache-base", "type": "database", "label": "Store/Cache 抽象", "sublabel": "BaseStore/BaseCache", "pos": [570, 700], "size": [180, 50], "tag": "libs/checkpoint" },
+    { "id": "backend-impls", "type": "backend", "label": "多后端实现", "sublabel": "Postgres/SQLite", "pos": [800, 700], "size": [180, 50], "tag": "postgres+sqlite" },
+
+    { "id": "ext-services", "type": "external", "label": "外部平台服务", "sublabel": "LLM/LangSmith/Platform", "pos": [1060, 150], "size": [180, 60] },
+    { "id": "ext-db", "type": "external", "label": "外部数据库", "sublabel": "Postgres/SQLite/Redis", "pos": [1060, 700], "size": [180, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "客户端层", "wraps": ["cli", "sdk-py"] },
+    { "kind": "region", "label": "图构建层", "wraps": ["graph-state-api", "channels"] },
+    { "kind": "region", "label": "执行引擎层", "wraps": ["pregel-engine", "pregel-io", "managed-values", "stream-framework"] },
+    { "kind": "region", "label": "持久化层 libs/checkpoint*", "wraps": ["checkpoint-base", "checkpoint-serde", "store-cache-base", "backend-impls"] }
+  ],
+  "connections": [
+    { "id": "user-cli", "from": "user-app", "to": "cli", "label": "命令调用", "variant": "default", "labelDy": -10 },
+    { "id": "user-sdk", "from": "user-app", "to": "sdk-py", "label": "API 调用", "variant": "default", "labelDy": -44 },
+    { "id": "sdk-func", "from": "sdk-py", "to": "func-api", "label": "调用图", "variant": "default", "labelAt": [345, 404] },
+    { "id": "prebuilt-pregel", "from": "prebuilt-api", "to": "pregel-engine", "label": "编译为图", "variant": "emphasis", "fromSide": "right", "toSide": "left", "labelDy": 20 },
+    { "id": "func-pregel", "from": "func-api", "to": "pregel-engine", "label": "桥接", "variant": "default", "fromSide": "right", "toSide": "left", "labelDy": 60 },
+    { "id": "graph-pregel", "from": "graph-state-api", "to": "pregel-engine", "label": "编译/通道", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelDy": 77 },
+    { "id": "channels-pregel", "from": "channels", "to": "pregel-engine", "label": "状态源", "variant": "default", "fromSide": "bottom", "toSide": "top", "labelDy": 38 },
+    { "id": "pregel-io-cp", "from": "pregel-engine", "to": "pregel-io", "label": "读写 checkpoint", "variant": "emphasis", "labelDy": -68 },
+    { "id": "pregel-managed", "from": "pregel-engine", "to": "managed-values", "label": "注入值", "variant": "default" },
+    { "id": "pregel-stream", "from": "pregel-engine", "to": "stream-framework", "label": "流事件", "variant": "emphasis" },
+    { "id": "io-checkpoint", "from": "pregel-io", "to": "checkpoint-base", "label": "get/put", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelDy": 28 },
+    { "id": "cp-serde", "from": "checkpoint-base", "to": "checkpoint-serde", "label": "序列化", "variant": "default" },
+    { "id": "cp-backend", "from": "checkpoint-base", "to": "backend-impls", "label": "后端路由", "variant": "default", "labelDy": 20 },
+    { "id": "backend-db", "from": "backend-impls", "to": "ext-db", "label": "连接数据库", "variant": "default" },
+    { "id": "prebuilt-ext", "from": "prebuilt-api", "to": "ext-services", "label": "LLM 调用", "variant": "default", "labelDy": 44 },
+    { "id": "sdk-ext", "from": "sdk-py", "to": "ext-services", "label": "连接平台", "variant": "dashed", "labelDy": -72 },
+    { "id": "pregel-foundation", "from": "pregel-engine", "to": "internal-foundation", "variant": "dashed", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "架构范式", "items": ["纯 Python 框架：能力缝 + 抽象基类 + 多后端矩阵", "Pregel BSP 模型：超级步循环 + 并发节点执行", "StateGraph 声明式构建 → 编译为 Pregel 图", "Channels 是状态唯一真相源，checkpoint 每步持久化"] },
+    { "dot": "emerald", "title": "依赖方向", "items": ["checkpoint → postgres/sqlite → prebuilt → langgraph", "sdk-py → langgraph + cli；cli 依赖 sdk-py", "同步/异步双轨：_async/_sync 与 aio 模块并行实现"] },
+    { "dot": "amber", "title": "外部边界（不在本仓库源码内）", "items": ["LLM 提供商、LangSmith 可观测性、LangGraph Platform", "Postgres/Redis/SQLite 数据库与驱动", "libs/sdk-js 仅 README 占位，实际在 langchain-ai/langgraphjs"] }
+  ]
+}

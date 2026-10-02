@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "SDK 事件流解码管道",
+    "output": "sdk-python-dataflow.html",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1160, 520]
+  },
+  "stages": [
+    { "label": "传输" },
+    { "label": "解码" },
+    { "label": "缓冲" },
+    { "label": "输出" }
+  ],
+  "nodes": [
+    { "id": "http-response", "type": "external", "label": "SSE 原始流", "sublabel": "HTTP 响应", "stage": 0, "row": 0 },
+    { "id": "sse-decoder", "type": "backend", "label": "增量解码器", "sublabel": "json/sse/text", "stage": 1, "row": 0 },
+    { "id": "stream-controller", "type": "backend", "label": "流式控制器", "sublabel": "多游标缓冲", "stage": 2, "row": 0 },
+    { "id": "stream-output", "type": "frontend", "label": "用户迭代器", "sublabel": "事件/消息", "stage": 3, "row": 0 }
+  ],
+  "flows": [
+    { "from": "http-response", "to": "sse-decoder", "label": "原始字节", "classification": "分块读取", "variant": "emphasis" },
+    { "from": "sse-decoder", "to": "stream-controller", "label": "事件对象", "classification": "按类型路由", "variant": "default" },
+    { "from": "stream-controller", "to": "stream-output", "label": "去重消息", "classification": "游标合并", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "解码器族", "items": ["json 解码超步/消息事件", "sse/text 兜底格式", "增量解析不等待整块"] },
+    { "dot": "emerald", "title": "双轨输出", "items": ["同步 iterator 与异步 async generator", "多游标缓冲去重并行运行", "取消传播经 context/生成器关闭"] }
+  ]
+}

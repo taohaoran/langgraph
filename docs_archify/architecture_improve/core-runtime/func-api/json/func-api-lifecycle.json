@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "task future 生命周期",
+    "output": "func-api-lifecycle.html",
+    "viewBox": [1030, 600],
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "lanes": [
+    { "id": "main", "label": "future 主路径" },
+    { "id": "err", "label": "失败重试" }
+  ],
+  "states": [
+    { "id": "created", "type": "start", "label": "已创建", "sublabel": "__call__ 返回", "lane": "main", "col": 0 },
+    { "id": "scheduled", "type": "active", "label": "已入图", "sublabel": "注册为任务", "lane": "main", "col": 1 },
+    { "id": "running", "type": "active", "label": "执行中", "sublabel": "节点跑函数", "lane": "main", "col": 2 },
+    { "id": "done", "type": "success", "label": "已完成", "sublabel": "future resolve", "lane": "main", "col": 3 },
+    { "id": "failed", "type": "failure", "label": "失败", "sublabel": "按 retry_policy", "lane": "err", "col": 2 }
+  ],
+  "transitions": [
+    { "id": "t1", "from": "created", "to": "scheduled", "label": "call 实现接管", "variant": "emphasis" },
+    { "id": "t2", "from": "scheduled", "to": "running", "label": "调度到帧" },
+    { "id": "t3", "from": "running", "to": "done", "label": "正常返回" },
+    { "id": "t4", "from": "running", "to": "failed", "label": "抛异常", "variant": "security", "route": "drop" },
+    { "id": "t5", "from": "failed", "to": "running", "label": "重试", "variant": "emphasis", "route": "bottom-channel" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "要点", "items": [
+      "future 立即返回、延迟完成",
+      "失败由 retry_policy 决定回迁",
+      "超时仅 async 任务支持"
+    ] }
+  ]
+}

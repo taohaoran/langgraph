@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "task 调用入图时序",
+    "output": "func-api-sequence.html",
+    "viewBox": [1080, 600],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "用户 entrypoint", "sublabel": "编排函数" },
+    { "id": "tf", "type": "backend", "label": "_TaskFunction", "sublabel": "func/__init__.py" },
+    { "id": "call", "type": "backend", "label": "_call_with_options", "sublabel": "_call.py:276" },
+    { "id": "impl", "type": "backend", "label": "call 实现", "sublabel": "config 注入" },
+    { "id": "node", "type": "backend", "label": "任务节点", "sublabel": "被调函数" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "tf", "y": 160, "label": "task(*args)", "variant": "emphasis" },
+    { "id": "m2", "from": "tf", "to": "call", "y": 200, "label": "转发 retry/cache/timeout" },
+    { "id": "m3", "from": "call", "to": "impl", "y": 245, "label": "config[CONF][CALL](func,...)", "variant": "emphasis" },
+    { "id": "m4", "from": "impl", "to": "node", "y": 295, "label": "调度执行" },
+    { "id": "m5", "from": "node", "to": "impl", "y": 335, "label": "返回结果/异常", "variant": "return" },
+    { "id": "m6", "from": "impl", "to": "tf", "y": 380, "label": "完成 future", "variant": "return" },
+    { "id": "m7", "from": "tf", "to": "user", "y": 420, "label": "SyncAsyncFuture", "variant": "return" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "要点", "items": [
+      "调用即返回 future，不阻塞",
+      "真实执行由 Pregel 调度",
+      "retry/timeout 随调用传递"
+    ] }
+  ]
+}

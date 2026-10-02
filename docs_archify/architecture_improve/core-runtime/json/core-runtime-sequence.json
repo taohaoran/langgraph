@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "core-runtime 编译与执行链",
+    "output": "core-runtime-sequence.html",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1180, 760],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "用户/应用" },
+    { "id": "graph", "type": "backend", "label": "图构建 API", "sublabel": "StateGraph" },
+    { "id": "pregel", "type": "backend", "label": "Pregel 引擎", "sublabel": "invoke" },
+    { "id": "io", "type": "backend", "label": "pregel-io", "sublabel": "checkpoint 读写" },
+    { "id": "channels", "type": "database", "label": "状态通道", "sublabel": "Channels" },
+    { "id": "stream", "type": "messagebus", "label": "流框架", "sublabel": "StreamTransform" },
+    { "id": "checkpoint", "type": "external", "label": "checkpoint 库", "sublabel": "libs/checkpoint" }
+  ],
+  "segments": [
+    { "from": 160, "to": 300, "label": "图编译" },
+    { "from": 340, "to": 650, "label": "恢复与超级步执行" },
+    { "from": 672, "to": 700, "label": "返回" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "graph", "y": 180, "label": "compile(schema, nodes)", "variant": "emphasis" },
+    { "id": "m3", "from": "user", "to": "pregel", "y": 350, "label": "invoke(input, config)", "variant": "emphasis" },
+    { "id": "m4", "from": "pregel", "to": "io", "y": 395, "label": "get_tuple(config)", "variant": "default" },
+    { "id": "m5", "from": "io", "to": "checkpoint", "y": 440, "label": "读取最新检查点", "variant": "default" },
+    { "id": "m6", "from": "checkpoint", "to": "io", "y": 485, "label": "返回 checkpoint", "variant": "return" },
+    { "id": "m7", "from": "io", "to": "pregel", "y": 530, "label": "重建通道状态", "variant": "return" },
+    { "id": "m8", "from": "pregel", "to": "channels", "y": 575, "label": "读写状态（超级步循环）", "variant": "emphasis" },
+    { "id": "m9", "from": "pregel", "to": "stream", "y": 620, "label": "发射流事件", "variant": "default" },
+    { "id": "m10", "from": "pregel", "to": "user", "y": 668, "label": "返回最终状态/流", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "graph", "from": 180, "to": 220, "type": "backend" },
+    { "participant": "pregel", "from": 350, "to": 668, "type": "backend" },
+    { "participant": "io", "from": 395, "to": 530, "type": "backend" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "编译产物", "items": ["StateGraph.compile 返回 Pregel 实例，节点/边/通道均已物化", "interrupt 与 Send 在编译期嵌入控制流", "编译一次、执行多次，可重复 invoke"] },
+    { "dot": "emerald", "title": "执行模型", "items": ["每超级步：就绪节点并发执行 → 通道合并 → 持久化", "恢复时经 pregel-io 从 checkpoint 重建通道", "流事件经 StreamTransform 转换后输出"] }
+  ]
+}

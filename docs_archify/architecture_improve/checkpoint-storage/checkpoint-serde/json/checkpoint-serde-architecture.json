@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "checkpoint-serde 序列化器族谱",
+    "output": "checkpoint-serde-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1440, 820]
+  },
+  "components": [
+    { "id": "saver", "type": "external", "label": "BaseCheckpointSaver", "pos": [60, 330], "size": [160, 64], "tag": "调用方" },
+    { "id": "proto", "type": "backend", "label": "SerializerProtocol", "pos": [330, 330], "size": [180, 70], "tag": "typed 协议" },
+    { "id": "untyped", "type": "external", "label": "旧式 dumps/loads", "pos": [330, 500], "size": [170, 60], "tag": "旧 pickle/json" },
+    { "id": "jsonplus", "type": "backend", "label": "JsonPlusSerializer", "pos": [620, 180], "size": [190, 70], "tag": "默认实现" },
+    { "id": "compat", "type": "backend", "label": "SerializerCompat", "pos": [620, 330], "size": [190, 60], "tag": "旧式适配" },
+    { "id": "encrypted", "type": "backend", "label": "EncryptedSerializer", "pos": [620, 480], "size": [190, 70], "tag": "加密包装" },
+    { "id": "allowlist", "type": "backend", "label": "安全白名单", "pos": [920, 180], "size": [160, 60], "tag": "SAFE_MSGPACK_TYPES" },
+    { "id": "ormsgpack", "type": "external", "label": "ormsgpack 库", "pos": [920, 330], "size": [160, 60], "tag": "不在本仓库" },
+    { "id": "cipher", "type": "external", "label": "AES Cipher", "pos": [920, 480], "size": [160, 60], "tag": "pycryptodome" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "序列化实现", "wraps": ["jsonplus", "compat", "encrypted"] },
+    { "kind": "region", "label": "外部依赖", "wraps": ["ormsgpack", "cipher", "untyped"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "saver", "to": "proto", "label": "dumps/loads_typed", "variant": "emphasis" },
+    { "id": "c2", "from": "jsonplus", "to": "proto", "label": "实现" },
+    { "id": "c3", "from": "compat", "to": "proto", "label": "实现" },
+    { "id": "c4", "from": "compat", "to": "untyped", "label": "包装旧式" },
+    { "id": "c5", "from": "encrypted", "to": "proto", "label": "实现" },
+    { "id": "c6", "from": "encrypted", "to": "jsonplus", "label": "装饰 inner" },
+    { "id": "c7", "from": "encrypted", "to": "cipher", "label": "加解密" },
+    { "id": "c8", "from": "jsonplus", "to": "ormsgpack", "label": "编码/解码", "variant": "emphasis" },
+    { "id": "c9", "from": "jsonplus", "to": "allowlist", "label": "反序列化校验" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "要点", "items": [
+      "type tag 分流 null/bytes/msgpack/json/pickle",
+      "msgpack ext code 0-7 复活自定义类型",
+      "strict 模式限制反序列化白名单",
+      "EncryptedSerializer 透明加解密"
+    ] }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "sdk-auth-encryption：请求认证与落库加密时序",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "sdk-auth-encryption/sdk-auth-encryption-sequence.html",
+    "viewBox": [1080, 720],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "req", "type": "external", "label": "HTTP 请求" },
+    { "id": "server", "type": "cloud", "label": "LangGraph Server" },
+    { "id": "auth", "type": "backend", "label": "Auth" },
+    { "id": "userh", "type": "external", "label": "用户处理器" },
+    { "id": "enc", "type": "backend", "label": "Encryption" }
+  ],
+  "segments": [
+    { "from": 150, "to": 380, "label": "一、认证与授权" },
+    { "from": 380, "to": 600, "label": "二、落库加密" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "req", "to": "server", "y": 170, "label": "HTTP 请求", "variant": "emphasis" },
+    { "id": "m2", "from": "server", "to": "auth", "y": 220, "label": "authenticate(token)" },
+    { "id": "m3", "from": "auth", "to": "userh", "y": 270, "label": "verify token" },
+    { "id": "m4", "from": "userh", "to": "auth", "y": 310, "label": "MinimalUserDict", "variant": "return" },
+    { "id": "m5", "from": "server", "to": "auth", "y": 355, "label": "on.threads.create 授权" },
+    { "id": "m6", "from": "server", "to": "enc", "y": 430, "label": "encrypt.json(metadata)" },
+    { "id": "m7", "from": "enc", "to": "userh", "y": 480, "label": "加密处理器" },
+    { "id": "m8", "from": "userh", "to": "enc", "y": 520, "label": "加密后 dict", "variant": "return" },
+    { "id": "m9", "from": "server", "to": "req", "y": 570, "label": "响应", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "auth", "from": 220, "to": 355, "type": "backend" },
+    { "participant": "enc", "from": 430, "to": 520, "type": "backend" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "授权匹配", "items": [
+      "先 authenticate",
+      "最具体 on.<res>.<act>",
+      "缺省全局 on"
+    ] }
+  ]
+}

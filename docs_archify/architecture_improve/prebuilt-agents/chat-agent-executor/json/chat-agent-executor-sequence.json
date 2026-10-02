@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "ReAct Agent 执行时序",
+    "output": "chat-agent-executor-sequence.html",
+    "viewBox": [1080, 620],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "调用方", "sublabel": "invoke" },
+    { "id": "agent", "type": "backend", "label": "call_model", "sublabel": "节点" },
+    { "id": "llm", "type": "cloud", "label": "LLM", "sublabel": "外部模型" },
+    { "id": "cont", "type": "backend", "label": "should_continue", "sublabel": "条件边" },
+    { "id": "tools", "type": "backend", "label": "ToolNode", "sublabel": "工具执行" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "agent", "y": 160, "label": "messages 状态", "variant": "emphasis" },
+    { "id": "m2", "from": "agent", "to": "llm", "y": 205, "label": "invoke(messages)", "variant": "emphasis" },
+    { "id": "m3", "from": "llm", "to": "agent", "y": 250, "label": "AIMessage(含 tool_calls)", "variant": "return" },
+    { "id": "m4", "from": "agent", "to": "cont", "y": 295, "label": "追加消息后路由" },
+    { "id": "m5", "from": "cont", "to": "tools", "y": 345, "label": "有 tool_calls → Send", "variant": "emphasis" },
+    { "id": "m6", "from": "tools", "to": "agent", "y": 390, "label": "ToolMessage 回灌", "variant": "return" },
+    { "id": "m7", "from": "cont", "to": "user", "y": 440, "label": "无 tool_calls → END", "variant": "return" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "执行链", "items": [
+      "模型→工具→模型 循环",
+      "v2 按 tool_call 并行派发",
+      "最终消息返回调用方"
+    ] }
+  ]
+}

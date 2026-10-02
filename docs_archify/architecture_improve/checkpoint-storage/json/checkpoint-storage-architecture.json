@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "checkpoint-storage 域架构",
+    "output": "checkpoint-storage-architecture.html",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1200, 720]
+  },
+  "components": [
+    { "id": "pregel-io", "type": "external", "label": "pregel-io", "sublabel": "langgraph 侧调用方", "pos": [20, 280], "size": [160, 60] },
+    { "id": "checkpoint-base", "type": "backend", "label": "Checkpoint 抽象", "sublabel": "BaseCheckpointSaver", "pos": [250, 180], "size": [190, 60], "tag": "checkpoint/base" },
+    { "id": "checkpoint-serde", "type": "backend", "label": "序列化器族", "sublabel": "jsonplus/msgpack/加密", "pos": [250, 360], "size": [190, 60], "tag": "checkpoint/serde" },
+    { "id": "store-cache-base", "type": "backend", "label": "Store/Cache 抽象", "sublabel": "BaseStore/BaseCache", "pos": [250, 520], "size": [190, 60], "tag": "store+cache" },
+    { "id": "checkpoint-postgres", "type": "backend", "label": "Postgres 后端", "sublabel": "Saver/Store 双轨", "pos": [520, 180], "size": [180, 60], "tag": "checkpoint-postgres" },
+    { "id": "checkpoint-sqlite", "type": "backend", "label": "SQLite 后端", "sublabel": "Saver/Store/Cache", "pos": [520, 520], "size": [180, 60], "tag": "checkpoint-sqlite" },
+    { "id": "checkpoint-conformance", "type": "backend", "label": "一致性测试套件", "sublabel": "跨后端契约", "pos": [520, 360], "size": [180, 60], "tag": "tests/" },
+    { "id": "postgres-db", "type": "external", "label": "PostgreSQL", "sublabel": "外部驱动", "pos": [790, 180], "size": [140, 50] },
+    { "id": "sqlite-db", "type": "external", "label": "SQLite", "sublabel": "外部驱动", "pos": [790, 520], "size": [140, 50] },
+    { "id": "redis", "type": "external", "label": "Redis", "sublabel": "cache 后端", "pos": [790, 650], "size": [140, 50] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "抽象层 libs/checkpoint", "wraps": ["checkpoint-base", "checkpoint-serde", "store-cache-base"] },
+    { "kind": "region", "label": "实现层 libs/checkpoint-*", "wraps": ["checkpoint-postgres", "checkpoint-sqlite"] },
+    { "kind": "region", "label": "测试层", "wraps": ["checkpoint-conformance"] }
+  ],
+  "connections": [
+    { "id": "io-base", "from": "pregel-io", "to": "checkpoint-base", "label": "get/put", "variant": "emphasis" },
+    { "id": "base-serde", "from": "checkpoint-base", "to": "checkpoint-serde", "label": "序列化", "variant": "default", "labelAt": [255, 300] },
+    { "id": "base-postgres", "from": "checkpoint-base", "to": "checkpoint-postgres", "label": "put 实现", "variant": "emphasis", "fromSide": "right", "toSide": "left" },
+    { "id": "base-sqlite", "from": "checkpoint-base", "to": "checkpoint-sqlite", "label": "put 实现", "variant": "default", "fromSide": "right", "toSide": "left" },
+    { "id": "store-postgres", "from": "store-cache-base", "to": "checkpoint-postgres", "label": "store 实现", "variant": "default", "labelDy": -50 },
+    { "id": "store-sqlite", "from": "store-cache-base", "to": "checkpoint-sqlite", "label": "store/cache", "variant": "default", "fromSide": "right", "toSide": "left" },
+    { "id": "conf-base", "from": "checkpoint-conformance", "to": "checkpoint-base", "label": "契约测试", "variant": "dashed" },
+    { "id": "conf-postgres", "from": "checkpoint-conformance", "to": "checkpoint-postgres", "label": "跨后端", "variant": "dashed", "fromSide": "right", "toSide": "left" },
+    { "id": "conf-sqlite", "from": "checkpoint-conformance", "to": "checkpoint-sqlite", "label": "跨后端", "variant": "dashed", "fromSide": "right", "toSide": "left", "labelDy": 30 },
+    { "id": "postgres-dbc", "from": "checkpoint-postgres", "to": "postgres-db", "label": "连接", "variant": "default" },
+    { "id": "sqlite-dbc", "from": "checkpoint-sqlite", "to": "sqlite-db", "label": "连接", "variant": "default" },
+    { "id": "store-redis", "from": "store-cache-base", "to": "redis", "label": "cache", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "域职责", "items": ["Checkpoint/Store/Cache 三套抽象 × Memory/Postgres/SQLite 多后端", "serde 族统一对象↔字节序列化，支持加密", "一致性测试套件保障各后端行为契约一致"] },
+    { "dot": "emerald", "title": "依赖方向", "items": ["checkpoint → checkpoint-postgres / checkpoint-sqlite", "Postgres/SQLite/Redis 数据库与驱动不在本仓库源码内", "同步/异步双轨：base/aio 与 _internal/_ainternal 并行"] }
+  ]
+}

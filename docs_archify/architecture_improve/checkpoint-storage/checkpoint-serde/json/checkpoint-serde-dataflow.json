@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "对象序列化→存储→反序列化管道",
+    "output": "checkpoint-serde-dataflow.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1200, 520]
+  },
+  "stages": [
+    { "label": "内存对象" },
+    { "label": "编码" },
+    { "label": "字节落库" },
+    { "label": "读取" },
+    { "label": "还原对象" }
+  ],
+  "nodes": [
+    { "id": "obj", "type": "frontend", "label": "Python 对象", "stage": 0, "row": 0 },
+    { "id": "dumps", "type": "backend", "label": "dumps_typed", "stage": 1, "row": 0 },
+    { "id": "aol", "type": "backend", "label": "白名单校验", "stage": 1, "row": 1 },
+    { "id": "tag", "type": "database", "label": "(type, bytes)", "stage": 2, "row": 0 },
+    { "id": "loads", "type": "backend", "label": "loads_typed", "stage": 3, "row": 0 },
+    { "id": "out", "type": "frontend", "label": "还原对象", "stage": 4, "row": 0 }
+  ],
+  "flows": [
+    { "from": "obj", "to": "dumps", "label": "通道值", "variant": "emphasis", "route": "straight" },
+    { "from": "dumps", "to": "tag", "label": "msgpack/bytes", "variant": "emphasis", "route": "straight" },
+    { "from": "tag", "to": "loads", "label": "读回字节", "variant": "emphasis", "route": "straight" },
+    { "from": "loads", "to": "out", "label": "ext_hook 复活", "variant": "emphasis", "route": "straight" },
+    { "from": "loads", "to": "aol", "label": "反序列化查白名单", "route": "vertical-channel", "labelDx": -50 }
+  ]
+}

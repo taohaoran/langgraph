@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "中断与恢复架构图",
+    "output": "interrupt-command-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "components": [
+    { "id": "node", "type": "external", "label": "用户节点", "sublabel": "图中调用 interrupt", "pos": [60, 110], "size": [150, 60] },
+    { "id": "fn", "type": "backend", "label": "interrupt()", "sublabel": "types.py:851", "pos": [330, 110], "size": [140, 60] },
+    { "id": "exc", "type": "security", "label": "GraphInterrupt", "sublabel": "errors.py:102", "pos": [330, 260], "size": [150, 60] },
+    { "id": "ckpt", "type": "database", "label": "checkpointer", "sublabel": "持久化暂停", "pos": [590, 260], "size": [150, 60] },
+    { "id": "client", "type": "external", "label": "调用方", "sublabel": "人机交互", "pos": [590, 110], "size": [140, 60] },
+    { "id": "cmd", "type": "backend", "label": "Command", "sublabel": "types.py:799 resume/goto", "pos": [330, 410], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "types.py（本叶子）", "wraps": ["fn", "exc", "cmd"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "node", "to": "fn", "label": "interrupt(value)", "variant": "emphasis" },
+    { "id": "c2", "from": "fn", "to": "exc", "label": "首次无 resume 抛错" },
+    { "id": "c3", "from": "exc", "to": "ckpt", "label": "暂停并持久化" },
+    { "id": "c4", "from": "ckpt", "to": "client", "label": "暴露 Interrupt" },
+    { "id": "c5", "from": "client", "to": "cmd", "label": "构造 Command(resume)" },
+    { "id": "c6", "from": "cmd", "to": "node", "label": "恢复重跑节点", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "核心要点", "items": [
+      "interrupt 用异常暂停图",
+      "checkpointer 保存状态",
+      "Command(resume) 重跑并取值"
+    ] }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "远端代理与调试架构图",
+    "output": "remote-debug-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "components": [
+    { "id": "local", "type": "external", "label": "本地图 / 用户", "sublabel": "调用方", "pos": [60, 110], "size": [150, 64] },
+    { "id": "rg", "type": "backend", "label": "RemoteGraph", "sublabel": "remote.py:118", "pos": [330, 110], "size": [150, 64] },
+    { "id": "client", "type": "external", "label": "LangGraphClient", "sublabel": "HTTP/SSE SDK", "pos": [600, 110], "size": [160, 64] },
+    { "id": "server", "type": "cloud", "label": "远端 LangGraph Server", "sublabel": "不在本仓库", "pos": [600, 280], "size": [170, 64] },
+    { "id": "debug", "type": "backend", "label": "map_debug_*", "sublabel": "debug.py", "pos": [330, 280], "size": [150, 64] },
+    { "id": "draw", "type": "backend", "label": "get_graph / draw", "sublabel": "图结构绘制", "pos": [330, 430], "size": [150, 64] },
+    { "id": "runtime", "type": "backend", "label": "Runtime", "sublabel": "runtime.py:125", "pos": [60, 280], "size": [150, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "本叶子（remote.py / runtime.py / debug.py）", "wraps": ["rg", "debug", "draw", "runtime"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "local", "to": "rg", "label": "当节点调用", "variant": "emphasis" },
+    { "id": "c2", "from": "rg", "to": "client", "label": "委托请求" },
+    { "id": "c3", "from": "client", "to": "server", "label": "REST / SSE", "variant": "emphasis" },
+    { "id": "c4", "from": "rg", "to": "debug", "label": "映射调试事件" },
+    { "id": "c5", "from": "rg", "to": "draw", "label": "取图结构" },
+    { "id": "c6", "from": "runtime", "to": "local", "label": "注入节点" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "核心要点", "items": [
+      "RemoteGraph 实现 PregelProtocol",
+      "行为同本地图，可作子图节点",
+      "Runtime 向节点注入上下文/存储"
+    ] }
+  ]
+}

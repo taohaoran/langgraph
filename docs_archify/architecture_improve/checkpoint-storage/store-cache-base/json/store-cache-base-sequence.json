@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "RedisCache 命中读链",
+    "output": "store-cache-base-sequence.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "participants": [
+    { "id": "caller", "type": "external", "label": "调用方" },
+    { "id": "cache", "type": "backend", "label": "RedisCache" },
+    { "id": "redis", "type": "cloud", "label": "Redis" },
+    { "id": "serde", "type": "backend", "label": "Serializer" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "caller", "to": "cache", "y": 170, "label": "get(keys)", "variant": "emphasis" },
+    { "id": "m2", "from": "cache", "to": "redis", "y": 255, "label": "mget(prefix:ns:key)" },
+    { "id": "m3", "from": "redis", "to": "cache", "y": 340, "label": "raw values(缺失返空)", "variant": "return" },
+    { "id": "m4", "from": "cache", "to": "serde", "y": 425, "label": "loads_typed(enc,data)" },
+    { "id": "m5", "from": "cache", "to": "caller", "y": 510, "label": "{key: value} 字典", "variant": "return" }
+  ]
+}

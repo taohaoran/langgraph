@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "put/get 读写链时序",
+    "output": "checkpoint-base-sequence.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1080, 820]
+  },
+  "participants": [
+    { "id": "pregel", "type": "external", "label": "Pregel 引擎" },
+    { "id": "saver", "type": "backend", "label": "InMemorySaver" },
+    { "id": "serde", "type": "backend", "label": "Serializer" },
+    { "id": "store", "type": "database", "label": "内存三表" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "pregel", "to": "saver", "y": 170, "label": "put(config, ckpt, meta, new_versions)", "variant": "emphasis" },
+    { "id": "m2", "from": "saver", "to": "serde", "y": 245, "label": "dumps_typed(通道值)" },
+    { "id": "m3", "from": "saver", "to": "store", "y": 315, "label": "写 blobs / Storage 表" },
+    { "id": "m4", "from": "saver", "to": "pregel", "y": 385, "label": "返回带新 checkpoint_id 的 config", "variant": "return" },
+    { "id": "m5", "from": "pregel", "to": "saver", "y": 475, "label": "get_tuple(config)", "variant": "emphasis" },
+    { "id": "m6", "from": "saver", "to": "store", "y": 545, "label": "读 blobs / writes 表" },
+    { "id": "m7", "from": "saver", "to": "serde", "y": 615, "label": "loads_typed(还原 channel_values)" },
+    { "id": "m8", "from": "saver", "to": "pregel", "y": 695, "label": "CheckpointTuple(含 parent_config)", "variant": "return" }
+  ]
+}

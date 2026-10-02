@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "ToolNode 工具调用时序",
+    "output": "tool-node-sequence.html",
+    "viewBox": [1080, 620],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "participants": [
+    { "id": "agent", "type": "external", "label": "agent 节点", "sublabel": "上游" },
+    { "id": "tn", "type": "backend", "label": "ToolNode._func", "sublabel": ":793" },
+    { "id": "rt", "type": "backend", "label": "ToolRuntime", "sublabel": "注入包" },
+    { "id": "exec", "type": "messagebus", "label": "executor", "sublabel": "并行" },
+    { "id": "tool", "type": "external", "label": "工具函数", "sublabel": "被调" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "agent", "to": "tn", "y": 160, "label": "AIMessage(tool_calls)", "variant": "emphasis" },
+    { "id": "m2", "from": "tn", "to": "rt", "y": 205, "label": "每 call 构造 runtime", "variant": "emphasis" },
+    { "id": "m3", "from": "rt", "to": "tn", "y": 250, "label": "注入 state/store/config", "variant": "return" },
+    { "id": "m4", "from": "tn", "to": "exec", "y": 300, "label": "map(_run_one)", "variant": "emphasis" },
+    { "id": "m5", "from": "exec", "to": "tool", "y": 345, "label": "调工具(含注入参数)" },
+    { "id": "m6", "from": "tool", "to": "exec", "y": 390, "label": "工具输出", "variant": "return" },
+    { "id": "m7", "from": "tn", "to": "agent", "y": 440, "label": "合并 ToolMessage 列表", "variant": "return" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "要点", "items": [
+      "解析 tool_calls 后批量执行",
+      "Injected* 参数不进工具 schema",
+      "结果合并为 ToolMessage 回写"
+    ] }
+  ]
+}

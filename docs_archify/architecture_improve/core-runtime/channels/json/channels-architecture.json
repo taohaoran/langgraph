@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "channels 通道原语族架构图",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "channels-architecture.html",
+    "viewBox": [1000, 640]
+  },
+  "components": [
+    { "id": "pregel", "type": "external", "label": "Pregel 引擎", "pos": [70, 70], "size": [160, 64], "tag": "每超步调度" },
+    { "id": "saver", "type": "external", "label": "Checkpointer", "pos": [760, 70], "size": [170, 64], "tag": "序列化持久化" },
+    { "id": "base", "type": "backend", "label": "BaseChannel", "pos": [410, 210], "size": [180, 60], "tag": "抽象基类" },
+    { "id": "lastvalue", "type": "backend", "label": "LastValue", "pos": [60, 360], "size": [140, 56] },
+    { "id": "anyvalue", "type": "backend", "label": "AnyValue", "pos": [220, 360], "size": [140, 56] },
+    { "id": "ephemeral", "type": "backend", "label": "EphemeralValue", "pos": [380, 360], "size": [150, 56] },
+    { "id": "untracked", "type": "backend", "label": "UntrackedValue", "pos": [550, 360], "size": [150, 56] },
+    { "id": "binop", "type": "backend", "label": "BinaryOperator", "pos": [140, 470], "size": [160, 56] },
+    { "id": "delta", "type": "backend", "label": "DeltaChannel", "pos": [330, 470], "size": [140, 56] },
+    { "id": "barrier", "type": "backend", "label": "NamedBarrier", "pos": [500, 470], "size": [150, 56] },
+    { "id": "topic", "type": "backend", "label": "Topic", "pos": [680, 470], "size": [130, 56] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "通道原语族（均继承 BaseChannel）", "wraps": ["base", "lastvalue", "anyvalue", "ephemeral", "untracked", "binop", "delta", "barrier", "topic"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "pregel", "to": "base", "label": "update / get / consume / finish", "variant": "emphasis" },
+    { "id": "c2", "from": "saver", "to": "base", "label": "checkpoint / from_checkpoint", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "值覆盖族", "items": ["LastValue 每步仅一值", "AnyValue 空值清空", "Ephemeral 下步即清", "Untracked 不落检查点"] },
+    { "dot": "cyan", "title": "聚合与栅栏", "items": ["BinaryOperator 归约", "DeltaChannel 增量回放", "NamedBarrier 集齐放行", "Topic 发布订阅追加"] }
+  ]
+}

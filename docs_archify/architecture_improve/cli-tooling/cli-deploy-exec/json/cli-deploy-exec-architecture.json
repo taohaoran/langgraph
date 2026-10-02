@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "cli-deploy-exec 组件架构图",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "cli-deploy-exec/cli-deploy-exec-architecture.html",
+    "viewBox": [1080, 620]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "终端用户", "sublabel": "langgraph deploy", "pos": [30, 270], "size": [120, 60] },
+    { "id": "deploygrp", "type": "frontend", "label": "deploy 命令组", "sublabel": "deploy.py", "pos": [190, 270], "size": [140, 60] },
+    { "id": "runner", "type": "backend", "label": "Runner/subp_exec", "sublabel": "exec.py", "pos": [410, 150], "size": [160, 60] },
+    { "id": "archive", "type": "backend", "label": "源码打包", "sublabel": "archive.py", "pos": [410, 270], "size": [160, 60] },
+    { "id": "uvlock", "type": "backend", "label": "uv 锁解析", "sublabel": "uv_lock.py", "pos": [410, 390], "size": [160, 60] },
+    { "id": "deps", "type": "backend", "label": "依赖追踪", "sublabel": "dependency_tracking.py", "pos": [410, 500], "size": [160, 60] },
+    { "id": "hostclient", "type": "backend", "label": "HostBackendClient", "sublabel": "host_backend.py", "pos": [630, 270], "size": [160, 60] },
+    { "id": "docker", "type": "external", "label": "Docker 引擎", "sublabel": "本地构建", "pos": [860, 150], "size": [150, 60] },
+    { "id": "langsmith", "type": "cloud", "label": "LangSmith 后端", "sublabel": "部署 API", "pos": [860, 270], "size": [150, 60] },
+    { "id": "gcs", "type": "cloud", "label": "GCS", "sublabel": "签名 URL", "pos": [860, 390], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "deploy 执行链（CLI 进程内）", "wraps": ["deploygrp", "runner", "archive", "uvlock", "deps", "hostclient"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "user", "to": "deploygrp", "label": "触发", "variant": "emphasis" },
+    { "id": "c2", "from": "deploygrp", "to": "runner", "label": "本地构建", "fromSide": "top", "toSide": "bottom" },
+    { "id": "c3", "from": "deploygrp", "to": "archive", "label": "打包" },
+    { "id": "c4", "from": "deploygrp", "to": "uvlock", "label": "锁计划", "fromSide": "bottom", "toSide": "top" },
+    { "id": "c5", "from": "deploygrp", "to": "deps", "label": "扫描", "fromSide": "bottom", "toSide": "top" },
+    { "id": "c6", "from": "deploygrp", "to": "hostclient", "label": "HTTP 调用" },
+    { "id": "c7", "from": "runner", "to": "docker", "label": "build", "variant": "dashed" },
+    { "id": "c8", "from": "hostclient", "to": "langsmith", "label": "REST", "variant": "emphasis" },
+    { "id": "c9", "from": "hostclient", "to": "gcs", "label": "PUT", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "要点", "items": [
+      "本地/远端构建双路径按 build_mode 分派",
+      "HostBackendClient 封装部署 REST API",
+      "uv 锁与依赖追踪供远端构建复现环境"
+    ] }
+  ]
+}

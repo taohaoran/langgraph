@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "状态输入输出与检查点数据流",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "pregel-io-checkpoint-dataflow.html",
+    "viewBox": [1080, 420]
+  },
+  "stages": [
+    { "label": "输入/控制映射" },
+    { "label": "运行期通道（内存）" },
+    { "label": "节点写出" },
+    { "label": "检查点构造" },
+    { "label": "持久化" }
+  ],
+  "nodes": [
+    { "id": "mapinput", "type": "frontend", "label": "map_input", "stage": 0, "row": 0 },
+    { "id": "mapcmd", "type": "frontend", "label": "map_command", "stage": 0, "row": 1 },
+    { "id": "channels", "type": "database", "label": "channels 内存", "stage": 1, "row": 0 },
+    { "id": "write", "type": "backend", "label": "ChannelWrite", "stage": 2, "row": 1 },
+    { "id": "createcp", "type": "backend", "label": "create_checkpoint", "stage": 3, "row": 0 },
+    { "id": "saver", "type": "database", "label": "saver 落盘", "stage": 4, "row": 0 }
+  ],
+  "flows": [
+    { "from": "mapinput", "to": "channels", "label": "初始输入", "variant": "emphasis", "route": "straight" },
+    { "from": "mapcmd", "to": "write", "label": "Command/Send", "variant": "dashed", "route": "straight" },
+    { "from": "write", "to": "channels", "label": "pending writes 归约", "variant": "emphasis", "route": "vertical-channel" },
+    { "from": "channels", "to": "createcp", "label": "每超步快照", "route": "straight" },
+    { "from": "createcp", "to": "saver", "label": "blob 提交", "route": "straight" }
+  ]
+}

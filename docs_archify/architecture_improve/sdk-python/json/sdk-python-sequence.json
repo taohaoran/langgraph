@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "SDK 流式运行调用链",
+    "output": "sdk-python-sequence.html",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1180, 700],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "用户应用" },
+    { "id": "client", "type": "frontend", "label": "sdk-client" },
+    { "id": "resources", "type": "backend", "label": "sdk-resources", "sublabel": "runs 端点" },
+    { "id": "http", "type": "backend", "label": "sdk-http", "sublabel": "HTTP 封装" },
+    { "id": "auth", "type": "security", "label": "认证/加密" },
+    { "id": "server", "type": "external", "label": "LangGraph Server", "sublabel": "远端" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "client", "y": 180, "label": "runs.stream(thread_id)", "variant": "emphasis" },
+    { "id": "m2", "from": "client", "to": "resources", "y": 225, "label": "委托运行请求", "variant": "default" },
+    { "id": "m3", "from": "resources", "to": "http", "y": 270, "label": "发送 HTTP 请求", "variant": "default" },
+    { "id": "m4", "from": "http", "to": "auth", "y": 315, "label": "附加认证/加密", "variant": "security" },
+    { "id": "m5", "from": "auth", "to": "http", "y": 355, "label": "返回请求头", "variant": "return" },
+    { "id": "m6", "from": "http", "to": "server", "y": 400, "label": "发起 SSE 请求", "variant": "emphasis" },
+    { "id": "m7", "from": "server", "to": "http", "y": 445, "label": "事件流返回", "variant": "return" },
+    { "id": "m8", "from": "http", "to": "resources", "y": 490, "label": "原始事件", "variant": "default" },
+    { "id": "m9", "from": "resources", "to": "client", "y": 535, "label": "解码后消息", "variant": "default" },
+    { "id": "m10", "from": "client", "to": "user", "y": 580, "label": "流式输出", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "resources", "from": 225, "to": 535, "type": "backend" },
+    { "participant": "http", "from": 270, "to": 490, "type": "backend" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "流式管道", "items": ["sse.py 增量解码器逐块解析", "多游标缓冲合并并行运行事件", "同步/异步双轨共用同一控制器"] },
+    { "dot": "emerald", "title": "认证", "items": ["平台/ LangSmith API 密钥注入", "加密模块处理敏感字段", "重试由 http.py 统一处理"] }
+  ]
+}

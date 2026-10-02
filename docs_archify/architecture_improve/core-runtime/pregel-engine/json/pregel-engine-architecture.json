@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pregel 引擎核心架构图",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "pregel-engine-architecture.html",
+    "viewBox": [1000, 500]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "用户代码", "pos": [60, 70], "size": [150, 60] },
+    { "id": "pregel", "type": "backend", "label": "Pregel", "pos": [320, 60], "size": [170, 60], "tag": "invoke/stream 入口" },
+    { "id": "loop", "type": "backend", "label": "PregelLoop", "pos": [320, 190], "size": [170, 60], "tag": "超级步循环" },
+    { "id": "runner", "type": "backend", "label": "PregelRunner", "pos": [320, 320], "size": [170, 60], "tag": "并发执行" },
+    { "id": "algo", "type": "backend", "label": "_algo 规划/归约", "pos": [580, 190], "size": [180, 56] },
+    { "id": "executor", "type": "backend", "label": "BackgroundExecutor", "pos": [580, 320], "size": [190, 56] },
+    { "id": "channels", "type": "external", "label": "channels", "pos": [820, 190], "size": [150, 56] },
+    { "id": "saver", "type": "external", "label": "checkpointer", "pos": [820, 320], "size": [150, 56] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Pregel 引擎核心（pregel/）", "wraps": ["pregel", "loop", "runner", "algo", "executor"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "user", "to": "pregel", "label": "invoke / stream", "variant": "emphasis" },
+    { "id": "c2", "from": "pregel", "to": "loop", "label": "驱动超步", "variant": "emphasis" },
+    { "id": "c3", "from": "loop", "to": "algo", "label": "规划/归约" },
+    { "id": "c4", "from": "loop", "to": "runner", "label": "tick(tasks)", "variant": "emphasis" },
+    { "id": "c5", "from": "runner", "to": "executor", "label": "submit 并发任务" },
+    { "id": "c6", "from": "runner", "to": "channels", "label": "commit 写入" },
+    { "id": "c7", "from": "loop", "to": "saver", "label": "_put_checkpoint" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "BSP 三阶段", "items": ["Plan：规划本步 actor", "Execute：并发执行", "Update：超步末统一更新通道"] }
+  ]
+}

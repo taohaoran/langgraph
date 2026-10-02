@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "checkpoint-sqlite 后端架构",
+    "output": "checkpoint-sqlite-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1440, 800]
+  },
+  "components": [
+    { "id": "pregel", "type": "external", "label": "Pregel 引擎", "pos": [60, 330], "size": [150, 60] },
+    { "id": "sync", "type": "backend", "label": "SqliteSaver", "pos": [340, 180], "size": [160, 60], "tag": "同步 sqlite3" },
+    { "id": "async", "type": "backend", "label": "AsyncSqliteSaver", "pos": [340, 290], "size": [160, 60], "tag": "异步 aiosqlite" },
+    { "id": "delta", "type": "backend", "label": "_delta 增量辅助", "pos": [340, 400], "size": [160, 56] },
+    { "id": "store", "type": "backend", "label": "SqliteStore", "pos": [600, 180], "size": [150, 56] },
+    { "id": "cache", "type": "backend", "label": "SqliteCache", "pos": [600, 290], "size": [150, 56] },
+    { "id": "serde", "type": "backend", "label": "Serializer", "pos": [600, 400], "size": [150, 56] },
+    { "id": "tables", "type": "database", "label": "SQLite 表", "pos": [860, 300], "size": [160, 70], "tag": "checkpoints/blobs/writes" },
+    { "id": "driver", "type": "external", "label": "sqlite3/aiosqlite", "pos": [1120, 300], "size": [160, 60], "tag": "标准库/可选" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "SQLite 后端实现", "wraps": ["sync", "async", "delta", "store", "cache"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "pregel", "to": "sync", "label": "put/get", "variant": "emphasis" },
+    { "id": "c2", "from": "sync", "to": "delta", "label": "祖先链走查" },
+    { "id": "c3", "from": "async", "to": "delta", "label": "祖先链走查" },
+    { "id": "c4", "from": "sync", "to": "serde", "label": "整份编解码" },
+    { "id": "c5", "from": "sync", "to": "tables", "label": "INSERT OR REPLACE", "variant": "emphasis" },
+    { "id": "c6", "from": "async", "to": "tables", "label": "异步写" },
+    { "id": "c7", "from": "tables", "to": "driver", "label": "SQL" },
+    { "id": "c8", "from": "store", "to": "tables", "label": "KV/向量" },
+    { "id": "c9", "from": "cache", "to": "tables", "label": "缓存" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "要点", "items": [
+      "整份 checkpoint 作 typed blob 存",
+      "同步/异步双轨共享 _delta SQL",
+      "过滤键白名单防 SQL 注入",
+      "单连接写由 lock 串行化"
+    ] }
+  ]
+}

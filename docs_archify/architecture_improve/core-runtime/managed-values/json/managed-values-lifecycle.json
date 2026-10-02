@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "托管值单步生命周期",
+    "output": "managed-values-lifecycle.html",
+    "viewBox": [1030, 600],
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "lanes": [
+    { "id": "main", "label": "单步生命周期" }
+  ],
+  "states": [
+    { "id": "absent", "type": "start", "label": "未实例化", "sublabel": "不落盘", "lane": "main", "col": 0 },
+    { "id": "derive", "type": "active", "label": "运行期派生", "sublabel": "get(scratchpad)", "lane": "main", "col": 1 },
+    { "id": "inject", "type": "active", "label": "注入节点输入", "sublabel": "节点可见", "lane": "main", "col": 2 },
+    { "id": "drop", "type": "neutral", "label": "步末丢弃", "sublabel": "无持久化", "lane": "main", "col": 3 }
+  ],
+  "transitions": [
+    { "id": "t1", "from": "absent", "to": "derive", "label": "进入该步", "variant": "emphasis" },
+    { "id": "t2", "from": "derive", "to": "inject", "label": "get 返回" },
+    { "id": "t3", "from": "inject", "to": "drop", "label": "本帧结束" },
+    { "id": "t4", "from": "drop", "to": "derive", "label": "下一步重算", "variant": "emphasis", "route": "bottom-channel" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "生命周期要点", "items": [
+      "托管值每步临时派生",
+      "从不写入 checkpoint",
+      "跨步无状态、不可累积"
+    ] }
+  ]
+}

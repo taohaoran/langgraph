@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "cli-core 组件架构图",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "cli-core/cli-core-architecture.html",
+    "viewBox": [1200, 660]
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "用户终端", "sublabel": "langgraph ...", "pos": [40, 290], "size": [120, 60] },
+    { "id": "cligroup", "type": "frontend", "label": "cli() Click 组", "sublabel": "NestedHelpGroup", "pos": [250, 290], "size": [150, 60] },
+    { "id": "commands", "type": "backend", "label": "up/build/dev 等命令", "sublabel": "cli.py 注册", "pos": [480, 170], "size": [180, 60], "tag": "本叶子命令" },
+    { "id": "deploygrp", "type": "backend", "label": "deploy 子命令组", "sublabel": "deploy.py 注入", "pos": [480, 300], "size": [180, 60] },
+    { "id": "config", "type": "backend", "label": "config 加载校验", "sublabel": "config.py", "pos": [770, 170], "size": [160, 60] },
+    { "id": "schemas", "type": "backend", "label": "schemas TypedDict", "sublabel": "schemas.py", "pos": [770, 300], "size": [160, 60] },
+    { "id": "jsonfile", "type": "external", "label": "langgraph.json", "sublabel": "磁盘文件", "pos": [1010, 170], "size": [150, 60] },
+    { "id": "analytics", "type": "backend", "label": "analytics 遥测", "sublabel": "analytics.py", "pos": [480, 450], "size": [180, 60] },
+    { "id": "supabase", "type": "external", "label": "Supabase 遥测端", "sublabel": "外部服务", "pos": [770, 450], "size": [160, 60] },
+    { "id": "docker", "type": "external", "label": "Docker 引擎", "sublabel": "subp_exec", "pos": [1010, 300], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "langgraph CLI 进程内", "wraps": ["cligroup", "commands", "deploygrp", "config", "schemas", "analytics"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "user", "to": "cligroup", "label": "argv", "variant": "emphasis" },
+    { "id": "c2", "from": "cligroup", "to": "commands", "label": "分发" },
+    { "id": "c3", "from": "cligroup", "to": "deploygrp", "label": "注入" },
+    { "id": "c4", "from": "commands", "to": "config", "label": "校验" },
+    { "id": "c5", "from": "deploygrp", "to": "config", "label": "读取" },
+    { "id": "c6", "from": "config", "to": "jsonfile", "label": "读入", "variant": "emphasis" },
+    { "id": "c7", "from": "config", "to": "schemas", "label": "校验规则" },
+    { "id": "c8", "from": "commands", "to": "analytics", "label": "装饰", "variant": "dashed", "fromSide": "bottom", "toSide": "top" },
+    { "id": "c9", "from": "analytics", "to": "supabase", "label": "上报", "variant": "dashed" },
+    { "id": "c10", "from": "commands", "to": "docker", "label": "调用", "variant": "dashed", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "要点", "items": [
+      "Click 组 + 装饰器统一命令入口",
+      "配置加载与 Docker 构建解耦",
+      "遥测后台线程上报，环境变量可关"
+    ] }
+  ]
+}

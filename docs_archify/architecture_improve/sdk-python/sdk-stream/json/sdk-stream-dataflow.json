@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "sdk-stream：SSE 解码数据流",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "sdk-stream/sdk-stream-dataflow.html",
+    "viewBox": [1080, 460]
+  },
+  "stages": [
+    { "label": "字节输入" },
+    { "label": "行切分" },
+    { "label": "事件解析" },
+    { "label": "投影解码" },
+    { "label": "消费" }
+  ],
+  "nodes": [
+    { "id": "n0", "type": "external", "label": "aiter_bytes", "stage": 0, "row": 0 },
+    { "id": "n1", "type": "backend", "label": "BytesLineDecoder", "stage": 1, "row": 0 },
+    { "id": "n2", "type": "backend", "label": "SSEDecoder", "stage": 2, "row": 0 },
+    { "id": "n3", "type": "backend", "label": "StreamPart", "stage": 2, "row": 1 },
+    { "id": "n4", "type": "backend", "label": "通道解码器", "stage": 3, "row": 0 },
+    { "id": "n5", "type": "external", "label": "消费者迭代", "stage": 4, "row": 0 }
+  ],
+  "flows": [
+    { "from": "n0", "to": "n1", "label": "chunk", "variant": "emphasis", "route": "straight" },
+    { "from": "n1", "to": "n2", "label": "line", "variant": "emphasis", "route": "straight" },
+    { "from": "n2", "to": "n3", "label": "event/data", "route": "straight", "labelDy": 20 },
+    { "from": "n3", "to": "n4", "label": "StreamPart", "variant": "emphasis", "route": "straight" },
+    { "from": "n4", "to": "n5", "label": "解码事件", "variant": "emphasis", "route": "straight" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "管道要点", "items": [
+      "增量切分 \\n \\r \\r\\n",
+      "空行触发事件下发",
+      "orjson 解析 data 字段"
+    ] }
+  ]
+}

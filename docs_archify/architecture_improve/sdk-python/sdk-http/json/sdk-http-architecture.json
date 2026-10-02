@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "sdk-http 组件架构图",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "sdk-http/sdk-http-architecture.html",
+    "viewBox": [1080, 520]
+  },
+  "components": [
+    { "id": "callers", "type": "external", "label": "资源客户端", "pos": [30, 240], "size": [130, 60] },
+    { "id": "http", "type": "backend", "label": "HttpClient", "sublabel": "get/post/stream", "pos": [210, 240], "size": [160, 60] },
+    { "id": "utils", "type": "backend", "label": "_shared 工具", "sublabel": "headers/编解码", "pos": [430, 120], "size": [160, 60] },
+    { "id": "errors", "type": "backend", "label": "errors.py", "sublabel": "状态码映射", "pos": [430, 360], "size": [160, 60] },
+    { "id": "httpx", "type": "cloud", "label": "httpx.Client", "sublabel": "传输", "pos": [660, 240], "size": [150, 60] },
+    { "id": "api", "type": "external", "label": "LangGraph API", "pos": [870, 240], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "sdk-py HTTP 封装层", "wraps": ["http", "utils", "errors"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "callers", "to": "http", "label": "调用", "variant": "emphasis" },
+    { "id": "c2", "from": "http", "to": "utils", "label": "编解码/headers", "fromSide": "top", "toSide": "bottom" },
+    { "id": "c3", "from": "http", "to": "errors", "label": "raise_for_status", "fromSide": "bottom", "toSide": "top" },
+    { "id": "c4", "from": "http", "to": "httpx", "label": "请求", "variant": "emphasis" },
+    { "id": "c5", "from": "httpx", "to": "api", "label": "HTTP" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "要点", "items": [
+      "异步/同步双轨 HttpClient",
+      "request_reconnect 跟随 Location",
+      "stream 走 SSE 自动重连"
+    ] }
+  ]
+}

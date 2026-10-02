@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "prebuilt-agents 域架构",
+    "output": "prebuilt-agents-architecture.html",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1100, 700]
+  },
+  "components": [
+    { "id": "user-app", "type": "external", "label": "用户/应用", "sublabel": "调用方", "pos": [20, 250], "size": [130, 60] },
+    { "id": "chat-agent", "type": "backend", "label": "ChatAgentExecutor", "sublabel": "create_react_agent", "pos": [220, 160], "size": [190, 60], "tag": "chat_agent_executor.py" },
+    { "id": "tool-node", "type": "backend", "label": "ToolNode", "sublabel": "工具执行/注入", "pos": [220, 340], "size": [190, 60], "tag": "tool_node.py" },
+    { "id": "interrupt-command", "type": "backend", "label": "Interrupt/Command", "sublabel": "人机交互", "pos": [220, 520], "size": [190, 60], "tag": "interrupt.py" },
+    { "id": "langgraph-core", "type": "external", "label": "langgraph 引擎", "sublabel": "libs/langgraph", "pos": [480, 60], "size": [170, 50] },
+    { "id": "llm", "type": "external", "label": "LLM 提供商", "sublabel": "外部", "pos": [480, 160], "size": [150, 50] },
+    { "id": "tools", "type": "external", "label": "外部工具", "sublabel": "函数/API", "pos": [480, 340], "size": [150, 50] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "预构建 Agent 层 libs/prebuilt", "wraps": ["chat-agent", "tool-node", "interrupt-command"] }
+  ],
+  "connections": [
+    { "id": "user-agent", "from": "user-app", "to": "chat-agent", "label": "调用 agent", "variant": "emphasis" },
+    { "id": "agent-llm", "from": "chat-agent", "to": "llm", "label": "模型调用", "variant": "emphasis" },
+    { "id": "agent-tool", "from": "chat-agent", "to": "tool-node", "label": "执行工具", "variant": "emphasis", "labelDy": 30 },
+    { "id": "tool-tools", "from": "tool-node", "to": "tools", "label": "外部调用", "variant": "default" },
+    { "id": "tools-tool", "from": "tools", "to": "tool-node", "label": "返回结果", "variant": "dashed" },
+    { "id": "agent-core", "from": "chat-agent", "to": "langgraph-core", "label": "编译为图", "variant": "default" },
+    { "id": "interrupt-agent", "from": "interrupt-command", "to": "chat-agent", "label": "中断/恢复", "variant": "default", "fromSide": "right", "toSide": "left", "labelDy": -30 },
+    { "id": "interrupt-core", "from": "interrupt-command", "to": "langgraph-core", "label": "Command 恢复", "variant": "dashed", "fromSide": "right", "toSide": "left", "labelDy": -20 }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "域职责", "items": ["create_react_agent 工厂生成可复用的 ReAct 图", "ToolNode 统一工具执行与状态注入", "interrupt()/Command 实现 human-in-the-loop"] },
+    { "dot": "emerald", "title": "外部边界", "items": ["LLM 提供商与外部工具不在本仓库源码内", "langgraph 引擎为另一域（libs/langgraph）", "AgentState 基于 MessagesState 的消息累加"] }
+  ]
+}

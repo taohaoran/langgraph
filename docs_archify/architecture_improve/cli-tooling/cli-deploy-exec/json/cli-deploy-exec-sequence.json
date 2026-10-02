@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "cli-deploy-exec：一次 deploy 执行链时序",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "cli-deploy-exec/cli-deploy-exec-sequence.html",
+    "viewBox": [1080, 720],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "cli", "type": "external", "label": "应用/用户", "sublabel": "langgraph deploy" },
+    { "id": "deploy", "type": "backend", "label": "deploy.py", "sublabel": "命令编排" },
+    { "id": "host", "type": "backend", "label": "HostBackendClient", "sublabel": "httpx" },
+    { "id": "docker", "type": "external", "label": "Docker 引擎", "sublabel": "本地构建" },
+    { "id": "api", "type": "cloud", "label": "LangSmith 后端", "sublabel": "部署 API" },
+    { "id": "gcs", "type": "cloud", "label": "GCS", "sublabel": "源码 tarball" }
+  ],
+  "segments": [
+    { "from": 140, "to": 310, "label": "一、预检与 deployment 解析" },
+    { "from": 310, "to": 460, "label": "二、构建（本地/远端）" },
+    { "from": 460, "to": 620, "label": "三、发布 revision 并轮询" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "cli", "to": "deploy", "y": 170, "label": "deploy 命令", "variant": "emphasis" },
+    { "id": "m2", "from": "deploy", "to": "host", "y": 215, "label": "解析/创建 deployment" },
+    { "id": "m3", "from": "host", "to": "api", "y": 255, "label": "POST /v2/deployments" },
+    { "id": "m4", "from": "api", "to": "host", "y": 295, "label": "返回 deployment_id", "variant": "return" },
+    { "id": "m5", "from": "deploy", "to": "docker", "y": 345, "label": "本地 docker build" },
+    { "id": "m6", "from": "docker", "to": "deploy", "y": 385, "label": "镜像就绪", "variant": "return" },
+    { "id": "m7", "from": "deploy", "to": "gcs", "y": 435, "label": "远端路径: 上传 tarball", "variant": "dashed" },
+    { "id": "m8", "from": "deploy", "to": "host", "y": 485, "label": "PATCH image_uri 或 source" },
+    { "id": "m9", "from": "host", "to": "api", "y": 525, "label": "PATCH /v2/deployments" },
+    { "id": "m10", "from": "api", "to": "host", "y": 565, "label": "revision 状态", "variant": "return" },
+    { "id": "m11", "from": "host", "to": "deploy", "y": 605, "label": "轮询直至终态", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "deploy", "from": 170, "to": 605, "type": "backend" },
+    { "participant": "host", "from": 215, "to": 605, "type": "backend" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "双构建路径", "items": [
+      "本地构建: docker build 后推 image_uri",
+      "远端构建: archive 打包 → GCS → 后端构建",
+      "build_mode 自动在本地失败时回退远端"
+    ] },
+    { "dot": "cyan", "title": "健壮性", "items": [
+      "httpx transport retries=3, timeout=30",
+      "轮询超时/中断可中断并打印结果"
+    ] }
+  ]
+}

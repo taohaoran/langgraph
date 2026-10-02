@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "运行配置合并数据流",
+    "output": "internal-foundation-dataflow.html",
+    "viewBox": [
+      1080,
+      560
+    ],
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "stages": [
+    {
+      "label": "配置来源"
+    },
+    {
+      "label": "合并"
+    },
+    {
+      "label": "打补丁"
+    },
+    {
+      "label": "注入运行期"
+    },
+    {
+      "label": "消费"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "c1",
+      "type": "external",
+      "label": "用户 config",
+      "sublabel": "调用方",
+      "stage": 0,
+      "row": 0
+    },
+    {
+      "id": "c2",
+      "type": "external",
+      "label": "图默认 config",
+      "sublabel": "编译期",
+      "stage": 0,
+      "row": 1
+    },
+    {
+      "id": "merge",
+      "type": "backend",
+      "label": "merge_configs",
+      "sublabel": "_config.py:147",
+      "stage": 1,
+      "row": 0
+    },
+    {
+      "id": "patch",
+      "type": "backend",
+      "label": "patch_config",
+      "sublabel": "_config.py:194",
+      "stage": 2,
+      "row": 0
+    },
+    {
+      "id": "conf",
+      "type": "database",
+      "label": "CONF dict",
+      "sublabel": "运行期配置",
+      "stage": 3,
+      "row": 0
+    },
+    {
+      "id": "cbm",
+      "type": "messagebus",
+      "label": "callback manager",
+      "sublabel": "回调分发",
+      "stage": 3,
+      "row": 1
+    },
+    {
+      "id": "exec",
+      "type": "backend",
+      "label": "图节点执行",
+      "sublabel": "Pregel 帧",
+      "stage": 4,
+      "row": 0
+    }
+  ],
+  "flows": [
+    {
+      "from": "c1",
+      "to": "merge",
+      "label": "config",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "from": "c2",
+      "to": "merge",
+      "label": "config",
+      "route": "straight"
+    },
+    {
+      "from": "merge",
+      "to": "patch",
+      "label": "合并后",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "from": "patch",
+      "to": "conf",
+      "route": "straight",
+      "label": "CONF",
+      "labelDy": 55,
+      "labelDx": -30
+    },
+    {
+      "from": "patch",
+      "to": "cbm",
+      "route": "straight",
+      "label": "回调",
+      "labelDy": 55,
+      "labelDx": 30
+    },
+    {
+      "from": "conf",
+      "to": "exec",
+      "label": "注入",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "from": "cbm",
+      "to": "exec",
+      "label": "回调事件",
+      "route": "straight"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "配置流要点",
+      "items": [
+        "多源 config 合并为单一视图",
+        "CONF 子键承载内部运行期",
+        "callbacks 聚合后分发给执行"
+      ]
+    }
+  ]
+}

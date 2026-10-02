@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "checkpoint-postgres 后端架构",
+    "output": "checkpoint-postgres-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1440, 820]
+  },
+  "components": [
+    { "id": "pregel", "type": "external", "label": "Pregel 引擎", "pos": [60, 330], "size": [150, 60] },
+    { "id": "base", "type": "backend", "label": "BasePostgresSaver", "pos": [330, 320], "size": [190, 70], "tag": "共享 SQL/编解码" },
+    { "id": "sync", "type": "backend", "label": "PostgresSaver", "pos": [610, 140], "size": [160, 60], "tag": "同步" },
+    { "id": "async", "type": "backend", "label": "AsyncPostgresSaver", "pos": [610, 250], "size": [160, 60], "tag": "异步" },
+    { "id": "shallow", "type": "backend", "label": "ShallowPostgresSaver", "pos": [610, 360], "size": [160, 60], "tag": "浅模式" },
+    { "id": "store", "type": "backend", "label": "PostgresStore", "pos": [610, 470], "size": [160, 60], "tag": "KV/向量" },
+    { "id": "serde", "type": "backend", "label": "Serializer", "pos": [880, 140], "size": [150, 56] },
+    { "id": "tables", "type": "database", "label": "四张表", "pos": [880, 330], "size": [160, 70], "tag": "checkpoints/blobs/writes" },
+    { "id": "driver", "type": "external", "label": "psycopg 驱动", "pos": [1140, 280], "size": [150, 60], "tag": "不在本仓库" },
+    { "id": "pg", "type": "cloud", "label": "Postgres DB", "pos": [1140, 420], "size": [150, 60], "tag": "外部服务" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Postgres 后端实现", "wraps": ["base", "sync", "async", "shallow", "store"] },
+    { "kind": "region", "label": "外部依赖", "wraps": ["driver", "pg"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "pregel", "to": "base", "label": "put/get", "variant": "emphasis" },
+    { "id": "c2", "from": "base", "to": "sync", "label": "继承" },
+    { "id": "c3", "from": "base", "to": "async", "label": "继承" },
+    { "id": "c4", "from": "base", "to": "shallow", "label": "继承" },
+    { "id": "c5", "from": "sync", "to": "serde", "label": "编码 blob" },
+    { "id": "c6", "from": "sync", "to": "tables", "label": "upsert", "variant": "emphasis" },
+    { "id": "c7", "from": "async", "to": "tables", "label": "upsert" },
+    { "id": "c8", "from": "tables", "to": "driver", "label": "SQL" },
+    { "id": "c9", "from": "driver", "to": "pg", "label": "网络" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "要点", "items": [
+      "基类共享 SQL 与 blob 编解码",
+      "同步/异步双轨,浅模式分支",
+      "基础值进 JSONB,大对象进 blob 表",
+      "pipeline 模式批量减往返"
+    ] }
+  ]
+}

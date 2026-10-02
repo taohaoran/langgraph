@@ -1,0 +1,76 @@
+# GitHub Pages 部署 workflow（GitHub Actions 发布源）
+# 内容源严格四级优先级: docs_archify/architecture_improve → docs_archify/architecture
+#                      → docs/architecture_improve → docs/architecture；均不存在回退 docs 根。
+# 构建时统一执行 md→html 渲染 + 生成导览 index.html（scripts/build-docs-html.py）。
+name: Deploy LangGraph docs to GitHub Pages
+
+on:
+  push:
+    branches: [feat-docs-archify-20261003]
+    paths:
+      - 'docs/**'
+      - 'docs-archify/**'
+      - 'docs_archify/**'
+      - 'scripts/build-docs-html.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      # ---- 内容源严格四级优先级选源：archify 根下优先/回退子目录 → 部署根下优先/回退子目录 → 均无则回退部署根 ----
+      - name: Build site content (strict 4-level source priority)
+        run: |
+          set -euo pipefail
+          rm -rf site && mkdir -p site
+          SRC=""
+          ARCH_ROOT=""
+          if [ -d "docs_archify" ]; then ARCH_ROOT="docs_archify"
+          elif [ -d "docs-archify" ]; then ARCH_ROOT="docs-archify"
+          fi
+          if [ -n "$ARCH_ROOT" ] && [ -d "$ARCH_ROOT/architecture_improve" ]; then
+            SRC="$ARCH_ROOT/architecture_improve"
+          elif [ -n "$ARCH_ROOT" ] && [ -d "$ARCH_ROOT/architecture" ]; then
+            SRC="$ARCH_ROOT/architecture"
+          elif [ -d "docs/architecture_improve" ]; then
+            SRC="docs/architecture_improve"
+          elif [ -d "docs/architecture" ]; then
+            SRC="docs/architecture"
+          fi
+          if [ -n "$SRC" ]; then
+            echo "==> $SRC found -> deploying its content strictly"
+            cp -R "$SRC/." site/
+          else
+            echo "==> none of the priority subdirs found -> deploying docs root"
+            cp -R docs/. site/
+          fi
+          # ---- md 默认转 html + 强制生成导览 index.md（链接全部 md 与 html）并渲染为 index.html ----
+          pip install --quiet markdown
+          python3 scripts/build-docs-html.py site --site-name "LangGraph 架构文档" --group-label "checkpoint-storage=检查点存储|cli-tooling=CLI 工具|core-runtime=核心运行时|json=数据|prebuilt-agents=预置智能体|sdk-python=Python SDK" --label-map "checkpoint-storage=检查点存储|cli-tooling=CLI 工具|core-runtime=核心运行时|json=数据|prebuilt-agents=预置智能体|sdk-python=Python SDK"
+          touch site/.nojekyll
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

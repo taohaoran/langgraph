@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "sdk-resources 组件架构图",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "sdk-resources/sdk-resources-architecture.html",
+    "viewBox": [1080, 560]
+  },
+  "components": [
+    { "id": "app", "type": "external", "label": "应用代码", "pos": [30, 250], "size": [110, 60] },
+    { "id": "top", "type": "backend", "label": "LangGraphClient", "pos": [180, 250], "size": [150, 60] },
+    { "id": "http", "type": "backend", "label": "HttpClient", "sublabel": "请求封装", "pos": [380, 250], "size": [140, 60] },
+    { "id": "assistants", "type": "backend", "label": "AssistantsClient", "pos": [600, 80], "size": [170, 50] },
+    { "id": "threads", "type": "backend", "label": "ThreadsClient", "pos": [600, 160], "size": [170, 50] },
+    { "id": "runs", "type": "backend", "label": "RunsClient", "pos": [600, 240], "size": [170, 50] },
+    { "id": "crons", "type": "backend", "label": "CronClient", "pos": [600, 320], "size": [170, 50] },
+    { "id": "store", "type": "backend", "label": "StoreClient", "pos": [600, 400], "size": [170, 50] },
+    { "id": "api", "type": "cloud", "label": "LangGraph API", "pos": [860, 250], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "资源端点客户端组（_async/_sync 双轨）", "wraps": ["assistants", "threads", "runs", "crons", "store"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "app", "to": "top", "label": "调用", "variant": "emphasis" },
+    { "id": "c2", "from": "top", "to": "http", "label": "持有" },
+    { "id": "c3", "from": "top", "to": "runs", "label": "挂载", "fromSide": "right", "toSide": "left" },
+    { "id": "c4", "from": "runs", "to": "http", "label": "经 http", "fromSide": "left", "toSide": "right" },
+    { "id": "c5", "from": "http", "to": "api", "label": "REST/SSE", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "要点", "items": [
+      "5 个资源客户端共享同一 HttpClient",
+      "每个方法映射一个 REST 端点",
+      "wait/stream 走 SSE 长连接"
+    ] }
+  ]
+}

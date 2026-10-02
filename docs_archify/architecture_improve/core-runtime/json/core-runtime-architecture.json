@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "core-runtime 域架构",
+    "output": "core-runtime-architecture.html",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1180, 700]
+  },
+  "components": [
+    { "id": "user-app", "type": "external", "label": "用户/应用", "sublabel": "调用方", "pos": [20, 250], "size": [130, 60] },
+    { "id": "func-api", "type": "backend", "label": "函数式 API", "sublabel": "@entrypoint/@task", "pos": [210, 180], "size": [160, 50], "tag": "langgraph/func" },
+    { "id": "graph-state-api", "type": "backend", "label": "图构建 API", "sublabel": "StateGraph/分支/Send", "pos": [210, 390], "size": [170, 50], "tag": "langgraph/graph" },
+    { "id": "prebuilt-api", "type": "external", "label": "预构建 Agent", "sublabel": "libs/prebuilt", "pos": [210, 60], "size": [150, 50] },
+    { "id": "pregel-engine", "type": "backend", "label": "Pregel 执行引擎", "sublabel": "BSP 超级步", "pos": [420, 180], "size": [190, 70], "tag": "langgraph/pregel" },
+    { "id": "channels", "type": "backend", "label": "状态通道原语", "sublabel": "LastValue/Topic/Barrier", "pos": [420, 390], "size": [180, 50], "tag": "langgraph/channels" },
+    { "id": "pregel-io", "type": "backend", "label": "checkpoint 读写", "sublabel": "输入输出合并", "pos": [420, 500], "size": [180, 50], "tag": "pregel/_io" },
+    { "id": "managed-values", "type": "backend", "label": "托管值注入", "sublabel": "ManagedValue", "pos": [650, 500], "size": [150, 50], "tag": "langgraph/managed" },
+    { "id": "stream-framework", "type": "messagebus", "label": "多模式流框架", "sublabel": "values/updates/debug", "pos": [650, 180], "size": [170, 50], "tag": "langgraph/stream" },
+    { "id": "remote-debug", "type": "backend", "label": "远端与调试", "sublabel": "RemoteGraph/绘制", "pos": [650, 60], "size": [160, 50], "tag": "pregel/remote" },
+    { "id": "internal-foundation", "type": "backend", "label": "内部基础设施", "sublabel": "Runnable/serde/retry", "pos": [650, 390], "size": [170, 50], "tag": "langgraph/_internal" },
+    { "id": "checkpoint-base", "type": "external", "label": "checkpoint 抽象", "sublabel": "libs/checkpoint", "pos": [900, 500], "size": [160, 50] },
+    { "id": "llm", "type": "external", "label": "LLM 提供商", "sublabel": "外部", "pos": [900, 180], "size": [130, 50] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "图构建层", "wraps": ["graph-state-api", "channels"] },
+    { "kind": "region", "label": "执行引擎层", "wraps": ["pregel-engine", "pregel-io", "managed-values"] },
+    { "kind": "region", "label": "流与调试层", "wraps": ["stream-framework", "remote-debug"] },
+    { "kind": "region", "label": "基础设施", "wraps": ["internal-foundation"] }
+  ],
+  "connections": [
+    { "id": "user-func", "from": "user-app", "to": "func-api", "label": "调用", "variant": "default" },
+    { "id": "user-graph", "from": "user-app", "to": "graph-state-api", "label": "建图/编译", "variant": "default", "labelDy": 14 },
+    { "id": "prebuilt-graph", "from": "prebuilt-api", "to": "graph-state-api", "label": "构建", "variant": "dashed" },
+    { "id": "func-pregel", "from": "func-api", "to": "pregel-engine", "label": "编译为图", "variant": "emphasis", "fromSide": "right", "toSide": "left" },
+    { "id": "graph-pregel", "from": "graph-state-api", "to": "pregel-engine", "label": "编译/通道", "variant": "emphasis", "fromSide": "right", "toSide": "left", "labelDy": 14 },
+    { "id": "channels-pregel", "from": "channels", "to": "pregel-engine", "label": "读写通道", "variant": "default", "fromSide": "right", "toSide": "left", "labelDy": -40 },
+    { "id": "pregel-io-cp", "from": "pregel-engine", "to": "pregel-io", "label": "checkpoint 读写", "variant": "default", "labelDy": -30 },
+    { "id": "pregel-managed", "from": "pregel-engine", "to": "managed-values", "label": "注入值", "variant": "default", "labelDy": 30 },
+    { "id": "pregel-stream", "from": "pregel-engine", "to": "stream-framework", "label": "流事件", "variant": "emphasis" },
+    { "id": "remote-pregel", "from": "remote-debug", "to": "pregel-engine", "label": "调试/代理", "variant": "default", "labelDy": 30 },
+    { "id": "pregel-found", "from": "pregel-engine", "to": "internal-foundation", "variant": "dashed", "labelDy": 40 },
+    { "id": "io-checkpoint", "from": "pregel-io", "to": "checkpoint-base", "label": "get/put", "variant": "default" },
+    { "id": "prebuilt-llm", "from": "prebuilt-api", "to": "llm", "label": "模型调用", "variant": "dashed" },
+    { "id": "stream-user", "from": "stream-framework", "to": "user-app", "label": "流输出", "variant": "dashed", "labelDy": -60 }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "域职责", "items": ["声明式建图 + Pregel BSP 执行 + 状态通道 + 多模式流", "func-api 提供 @entrypoint/@task 函数式编程入口", "remote-debug 支持远端代理与调试钩子"] },
+    { "dot": "emerald", "title": "依赖方向", "items": ["graph/channels/func 编译为 pregel-engine 执行", "pregel-engine 依赖 _internal 基础设施与 checkpoint 抽象", "managed-values 在超级步内注入上下文值"] }
+  ]
+}

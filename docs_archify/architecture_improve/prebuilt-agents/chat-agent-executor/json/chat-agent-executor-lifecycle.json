@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "ReAct 循环状态机",
+    "output": "chat-agent-executor-lifecycle.html",
+    "viewBox": [1030, 600],
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "lanes": [
+    { "id": "main", "label": "ReAct 主循环" }
+  ],
+  "states": [
+    { "id": "start", "type": "start", "label": "接收输入", "sublabel": "messages", "lane": "main", "col": 0 },
+    { "id": "think", "type": "active", "label": "思考 call_model", "sublabel": "调 LLM", "lane": "main", "col": 1 },
+    { "id": "decide", "type": "decision", "label": "是否需工具", "sublabel": "should_continue", "lane": "main", "col": 2 },
+    { "id": "act", "type": "active", "label": "执行工具", "sublabel": "ToolNode", "lane": "main", "col": 3 },
+    { "id": "end", "type": "success", "label": "返回最终消息", "sublabel": "END", "lane": "main", "col": 4 }
+  ],
+  "transitions": [
+    { "id": "t1", "from": "start", "to": "think", "label": "开始", "variant": "emphasis" },
+    { "id": "t2", "from": "think", "to": "decide", "label": "得到 AIMessage" },
+    { "id": "t3", "from": "decide", "to": "end", "label": "无 tool_calls" },
+    { "id": "t4", "from": "decide", "to": "act", "label": "有 tool_calls" },
+    { "id": "t5", "from": "act", "to": "think", "label": "ToolMessage 回灌", "variant": "emphasis", "route": "bottom-channel" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "循环要点", "items": [
+      "思考→行动 循环直到不再调工具",
+      "受 recursion_limit 约束",
+      "v2 按 tool_call 并行 Send"
+    ] }
+  ]
+}

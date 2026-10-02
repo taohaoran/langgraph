@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "流式框架架构图",
+    "output": "stream-framework-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "components": [
+    { "id": "pregel", "type": "external", "label": "Pregel 图事件源", "sublabel": "StreamPart", "pos": [60, 110], "size": [150, 64] },
+    { "id": "convert", "type": "backend", "label": "协议事件转换", "sublabel": "_convert.py", "pos": [310, 110], "size": [150, 64] },
+    { "id": "mux", "type": "backend", "label": "StreamMux", "sublabel": "_mux.py:26", "pos": [560, 110], "size": [150, 64] },
+    { "id": "chain", "type": "backend", "label": "transformers 链", "sublabel": "按注册序 process", "pos": [560, 280], "size": [160, 64] },
+    { "id": "chan", "type": "database", "label": "StreamChannel 投影", "sublabel": "stream_channel.py:14", "pos": [310, 280], "size": [160, 64] },
+    { "id": "run", "type": "backend", "label": "GraphRunStream", "sublabel": "run_stream.py:57", "pos": [560, 440], "size": [150, 64] },
+    { "id": "user", "type": "frontend", "label": "用户迭代器", "sublabel": "async for", "pos": [310, 440], "size": [150, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "stream/ 包（本叶子）", "wraps": ["convert", "mux", "chain", "chan", "run"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "pregel", "to": "convert", "label": "StreamPart", "variant": "emphasis" },
+    { "id": "c2", "from": "convert", "to": "mux", "label": "ProtocolEvent", "variant": "emphasis" },
+    { "id": "c3", "from": "mux", "to": "chain", "label": "push 按序分发" },
+    { "id": "c4", "from": "chain", "to": "chan", "label": "写投影" },
+    { "id": "c5", "from": "run", "to": "mux", "label": "pump 拉取" },
+    { "id": "c6", "from": "chan", "to": "user", "label": "迭代读取", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "核心要点", "items": [
+      "transformer 观察事件、产出投影",
+      "process 返回 False 可抑制事件",
+      "投影即用户可迭代的 StreamChannel"
+    ] }
+  ]
+}

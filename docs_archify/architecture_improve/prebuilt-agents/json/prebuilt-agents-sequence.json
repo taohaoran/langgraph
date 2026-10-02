@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "ReAct agent 一轮执行链",
+    "output": "prebuilt-agents-sequence.html",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1120, 680],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "用户/应用" },
+    { "id": "agent", "type": "backend", "label": "ChatAgent", "sublabel": "ReAct 循环" },
+    { "id": "model", "type": "external", "label": "LLM", "sublabel": "外部提供商" },
+    { "id": "tool-node", "type": "backend", "label": "ToolNode", "sublabel": "工具执行" },
+    { "id": "tools", "type": "external", "label": "外部工具", "sublabel": "函数/API" }
+  ],
+  "segments": [
+    { "from": 160, "to": 500, "label": "思考→行动循环" },
+    { "from": 520, "to": 620, "label": "完成" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "agent", "y": 180, "label": "invoke(messages)", "variant": "emphasis" },
+    { "id": "m2", "from": "agent", "to": "model", "y": 225, "label": "调用 LLM（含工具定义）", "variant": "default" },
+    { "id": "m3", "from": "model", "to": "agent", "y": 270, "label": "返回 tool_calls", "variant": "return" },
+    { "id": "m4", "from": "agent", "to": "tool-node", "y": 315, "label": "执行工具调用", "variant": "emphasis" },
+    { "id": "m5", "from": "tool-node", "to": "tools", "y": 360, "label": "调用外部工具", "variant": "default" },
+    { "id": "m6", "from": "tools", "to": "tool-node", "y": 400, "label": "返回结果", "variant": "return" },
+    { "id": "m7", "from": "tool-node", "to": "agent", "y": 440, "label": "ToolMessage 更新状态", "variant": "return" },
+    { "id": "m8", "from": "agent", "to": "model", "y": 480, "label": "再次调用（循环）", "variant": "dashed" },
+    { "id": "m9", "from": "model", "to": "agent", "y": 540, "label": "返回最终答案", "variant": "return" },
+    { "id": "m10", "from": "agent", "to": "user", "y": 590, "label": "返回最终结果", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "agent", "from": 180, "to": 590, "type": "backend" },
+    { "participant": "tool-node", "from": 315, "to": 440, "type": "backend" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "ReAct 循环", "items": ["思考→行动循环直到无 tool_calls", "受 recursion_limit 约束，超限抛异常", "v2 支持按 tool_call 并行 Send"] },
+    { "dot": "emerald", "title": "人机交互", "items": ["interrupt() 可在循环中挂起", "Command(resume/goto) 恢复执行", "挂起期间 checkpoint 已持久化"] }
+  ]
+}

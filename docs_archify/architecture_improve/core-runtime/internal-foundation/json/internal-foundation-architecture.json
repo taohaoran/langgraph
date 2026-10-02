@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "内部基础设施架构图",
+    "output": "internal-foundation-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "components": [
+    { "id": "callers", "type": "external", "label": "图/节点调用方", "sublabel": "上游库", "pos": [60, 250], "size": [150, 64] },
+    { "id": "cfg", "type": "backend", "label": "_config 配置合并", "sublabel": "_config.py:147", "pos": [330, 90], "size": [160, 64] },
+    { "id": "cb", "type": "backend", "label": "callbacks 回调", "sublabel": "callbacks.py", "pos": [600, 90], "size": [150, 64] },
+    { "id": "runnable", "type": "backend", "label": "RunnableCallable/Seq", "sublabel": "_runnable.py:299/584", "pos": [330, 250], "size": [160, 64] },
+    { "id": "future", "type": "backend", "label": "_future 桥接", "sublabel": "_future.py:82", "pos": [600, 250], "size": [150, 64] },
+    { "id": "queue", "type": "messagebus", "label": "_queue 队列", "sublabel": "_queue.py:12/70", "pos": [330, 410], "size": [160, 64] },
+    { "id": "serde", "type": "database", "label": "_serde 序列化", "sublabel": "_serde.py", "pos": [600, 410], "size": [150, 64] },
+    { "id": "err", "type": "security", "label": "errors 异常体系", "sublabel": "errors.py:50", "pos": [60, 410], "size": [150, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "_internal/ + 顶层基础设施（本叶子）", "wraps": ["cfg", "cb", "runnable", "future", "queue", "serde", "err"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "callers", "to": "cfg", "label": "传入 config", "variant": "emphasis" },
+    { "id": "c2", "from": "callers", "to": "runnable", "label": "包装函数" },
+    { "id": "c3", "from": "cfg", "to": "cb", "label": "合并 callbacks" },
+    { "id": "c4", "from": "runnable", "to": "future", "label": "sync/async 桥接" },
+    { "id": "c5", "from": "runnable", "to": "queue", "label": "并发原语" },
+    { "id": "c6", "from": "runnable", "to": "serde", "label": "参数序列化" },
+    { "id": "c7", "from": "err", "to": "runnable", "label": "异常冒泡" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "核心要点", "items": [
+      "配置合并与回调聚合",
+      "sync/async 双轨 Runnable",
+      "统一异常基类 GraphBubbleUp"
+    ] }
+  ]
+}

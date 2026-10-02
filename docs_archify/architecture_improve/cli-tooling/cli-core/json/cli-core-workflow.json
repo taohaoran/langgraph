@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "cli-core 命令分发与配置加载流程",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "cli-core/cli-core-workflow.html",
+    "viewBox": [1080, 760]
+  },
+  "lanes": [
+    { "id": "user", "label": "终端用户" },
+    { "id": "cli", "label": "CLI 进程" },
+    { "id": "cfg", "label": "配置层" },
+    { "id": "ext", "label": "外部系统" },
+    { "id": "fail", "label": "失败回退", "variant": "exception" }
+  ],
+  "nodes": [
+    { "id": "start", "lane": "user", "col": 0, "type": "external", "label": "执行 CLI 命令" },
+    { "id": "parse", "lane": "cli", "col": 1, "type": "frontend", "label": "cli() 解析参数" },
+    { "id": "validate", "lane": "cfg", "col": 2, "type": "backend", "label": "校验配置文件", "sublabel": "validate_config_file" },
+    { "id": "judge", "lane": "cfg", "col": 3, "type": "backend", "label": "校验通过?" },
+    { "id": "compose", "lane": "cli", "col": 4, "type": "backend", "label": "生成 compose 参数", "width": 160 },
+    { "id": "dockerup", "lane": "ext", "col": 5, "type": "external", "label": "compose up" },
+    { "id": "err", "lane": "fail", "col": 3, "type": "security", "label": "报错退出码 1" }
+  ],
+  "edges": [
+    { "from": "start", "to": "parse", "label": "触发", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "parse", "to": "validate", "label": "进入命令体", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "validate", "to": "judge", "label": "结果" },
+    { "from": "judge", "to": "compose", "label": "通过", "variant": "emphasis", "route": "drop", "fromSide": "top", "toSide": "bottom" },
+    { "from": "compose", "to": "dockerup", "label": "下发", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "judge", "to": "err", "label": "失败", "variant": "security", "role": "error", "route": "drop", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "mainPath": ["start", "parse", "validate", "judge", "compose", "dockerup"],
+  "cards": [
+    { "dot": "emerald", "title": "流程要点", "items": [
+      "校验失败立即 SystemExit(1)",
+      "成功后拼装 compose stdin 再调 Docker",
+      "遥测装饰器在命令体之外异步执行"
+    ] }
+  ]
+}

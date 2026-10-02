@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "StateGraph 编译链时序",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "graph-state-api-sequence.html",
+    "viewBox": [1080, 820]
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "用户代码" },
+    { "id": "builder", "type": "backend", "label": "StateGraph" },
+    { "id": "factory", "type": "backend", "label": "通道派生" },
+    { "id": "compiled", "type": "backend", "label": "可执行图" },
+    { "id": "pregel", "type": "external", "label": "Pregel" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "builder", "y": 190, "label": "add_node / add_edge / 条件边" },
+    { "id": "m2", "from": "user", "to": "builder", "y": 270, "label": "compile(checkpointer)", "variant": "emphasis" },
+    { "id": "m3", "from": "builder", "to": "factory", "y": 360, "label": "遍历 state_schema 派生通道" },
+    { "id": "m4", "from": "factory", "to": "builder", "y": 430, "label": "返回 channels dict", "variant": "return" },
+    { "id": "m5", "from": "builder", "to": "compiled", "y": 510, "label": "组装节点/边/通道" },
+    { "id": "m6", "from": "compiled", "to": "pregel", "y": 580, "label": "super().__init__(**kwargs)" },
+    { "id": "m7", "from": "compiled", "to": "user", "y": 670, "label": "返回可执行图（invoke/stream）", "variant": "return" }
+  ]
+}

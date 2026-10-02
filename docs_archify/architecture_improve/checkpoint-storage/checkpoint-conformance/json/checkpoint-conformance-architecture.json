@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "checkpoint-conformance 测试套件组件",
+    "output": "checkpoint-conformance-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "viewBox": [1440, 820]
+  },
+  "components": [
+    { "id": "pytest", "type": "external", "label": "pytest 运行器", "pos": [60, 340], "size": [150, 60] },
+    { "id": "t-memory", "type": "backend", "label": "test_memory", "pos": [330, 110], "size": [180, 56] },
+    { "id": "t-serde", "type": "backend", "label": "test_jsonplus/encrypted", "pos": [330, 210], "size": [180, 56] },
+    { "id": "t-store", "type": "backend", "label": "test_store", "pos": [330, 310], "size": [180, 56] },
+    { "id": "t-cache", "type": "backend", "label": "test_redis_cache", "pos": [330, 410], "size": [180, 56] },
+    { "id": "t-conf", "type": "backend", "label": "test_conformance_delta", "pos": [330, 510], "size": [180, 56] },
+    { "id": "fixture", "type": "backend", "label": "CharacterEmbeddings", "pos": [620, 310], "size": [170, 56], "tag": "假向量" },
+    { "id": "conf-pkg", "type": "external", "label": "一致性套件包", "pos": [620, 510], "size": [170, 60], "tag": "可选 extras" },
+    { "id": "redis", "type": "external", "label": "Redis 服务", "pos": [620, 410], "size": [170, 56], "tag": "localhost:6379" },
+    { "id": "impl", "type": "backend", "label": "被测实现(各存储叶子)", "pos": [900, 300], "size": [220, 80], "tag": "验收方" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "测试用例", "wraps": ["t-memory", "t-serde", "t-store", "t-cache", "t-conf"] },
+    { "kind": "region", "label": "外部依赖", "wraps": ["conf-pkg", "redis"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "pytest", "to": "t-conf", "label": "运行", "variant": "emphasis" },
+    { "id": "c2", "from": "t-conf", "to": "conf-pkg", "label": "validate(...)", "variant": "emphasis" },
+    { "id": "c3", "from": "t-store", "to": "fixture", "label": "假向量" },
+    { "id": "c4", "from": "t-cache", "to": "redis", "label": "连接,不可用则skip" },
+    { "id": "c5", "from": "t-memory", "to": "impl", "label": "驱动" },
+    { "id": "c6", "from": "t-serde", "to": "impl", "label": "往返" },
+    { "id": "c7", "from": "t-store", "to": "impl", "label": "驱动" },
+    { "id": "c8", "from": "t-cache", "to": "impl", "label": "驱动" },
+    { "id": "c9", "from": "t-conf", "to": "impl", "label": "能力校验" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "要点", "items": [
+      "一致性套件为可选包,缺失即skip",
+      "Redis 不可用自动跳过",
+      "同步/异步双轨用例全覆盖",
+      "并发与取消韧性重点断言"
+    ] }
+  ]
+}

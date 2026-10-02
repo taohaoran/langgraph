@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "checkpoint 写入与恢复链",
+    "output": "checkpoint-storage-sequence.html",
+    "quality_profile": "standard",
+    "locale": "zh-CN",
+    "viewBox": [1140, 680],
+    "column_fit": "spread"
+  },
+  "participants": [
+    { "id": "io", "type": "external", "label": "pregel-io", "sublabel": "引擎调用方" },
+    { "id": "base", "type": "backend", "label": "Checkpoint 抽象", "sublabel": "Saver" },
+    { "id": "serde", "type": "backend", "label": "序列化器族", "sublabel": "Serializer" },
+    { "id": "pg", "type": "backend", "label": "Postgres 后端", "sublabel": "异步/同步" },
+    { "id": "db", "type": "external", "label": "PostgreSQL", "sublabel": "外部驱动" }
+  ],
+  "segments": [
+    { "from": 160, "to": 360, "label": "写入（每超级步）" },
+    { "from": 400, "to": 620, "label": "恢复（get_tuple）" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "io", "to": "base", "y": 180, "label": "put(checkpoint, metadata)", "variant": "emphasis" },
+    { "id": "m2", "from": "base", "to": "serde", "y": 225, "label": "dumps 序列化", "variant": "default" },
+    { "id": "m3", "from": "serde", "to": "base", "y": 270, "label": "返回字节", "variant": "return" },
+    { "id": "m4", "from": "base", "to": "pg", "y": 315, "label": "upsert checkpoint", "variant": "default" },
+    { "id": "m5", "from": "pg", "to": "db", "y": 345, "label": "SQL 写入", "variant": "default" },
+    { "id": "m6", "from": "io", "to": "base", "y": 420, "label": "get_tuple(config)", "variant": "emphasis" },
+    { "id": "m7", "from": "base", "to": "pg", "y": 465, "label": "查询最新版本", "variant": "default" },
+    { "id": "m8", "from": "pg", "to": "base", "y": 510, "label": "返回字节记录", "variant": "return" },
+    { "id": "m9", "from": "base", "to": "serde", "y": 555, "label": "loads 反序列化", "variant": "default" },
+    { "id": "m10", "from": "base", "to": "io", "y": 595, "label": "返回 checkpoint tuple", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "base", "from": 180, "to": 315, "type": "backend" },
+    { "participant": "serde", "from": 225, "to": 270, "type": "backend" },
+    { "participant": "pg", "from": 315, "to": 345, "type": "backend" },
+    { "participant": "base", "from": 420, "to": 595, "type": "backend" },
+    { "participant": "pg", "from": 465, "to": 510, "type": "backend" },
+    { "participant": "serde", "from": 555, "to": 580, "type": "backend" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "写入路径", "items": ["每超级步结束 put 一次 checkpoint", "序列化走 serde 族：jsonplus 默认/msgpack/加密", "版本号单调递增，pending writes 记录未落盘写入"] },
+    { "dot": "emerald", "title": "恢复路径", "items": ["get_tuple 按 config 定位最新版本", "字节经 serde 反序列化为状态对象", "Memory/Postgres/SQLite 后端行为由一致性套件保证"] }
+  ]
+}

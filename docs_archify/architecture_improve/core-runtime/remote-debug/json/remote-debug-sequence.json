@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "RemoteGraph 远端调用时序",
+    "output": "remote-debug-sequence.html",
+    "viewBox": [1080, 560],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "locale": "zh-CN"
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "本地图/用户", "sublabel": "调用方" },
+    { "id": "rg", "type": "backend", "label": "RemoteGraph", "sublabel": "remote.py" },
+    { "id": "client", "type": "external", "label": "LangGraphClient", "sublabel": "HTTP SDK" },
+    { "id": "server", "type": "cloud", "label": "远端 Server", "sublabel": "不在本仓库" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "user", "to": "rg", "y": 160, "label": "invoke/stream(input, config)", "variant": "emphasis" },
+    { "id": "m2", "from": "rg", "to": "client", "y": 205, "label": "_validate_client + 构造请求" },
+    { "id": "m3", "from": "client", "to": "server", "y": 255, "label": "POST /threads/runs (SSE)", "variant": "emphasis" },
+    { "id": "m4", "from": "server", "to": "client", "y": 300, "label": "流式事件", "variant": "return" },
+    { "id": "m5", "from": "client", "to": "rg", "y": 345, "label": "映射为 StreamPart/状态", "variant": "return" },
+    { "id": "m6", "from": "rg", "to": "user", "y": 390, "label": "返回结果/StateSnapshot", "variant": "return" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "要点", "items": [
+      "本地代理远端图，协议对齐 Pregel",
+      "SSE 事件流转为本地流",
+      "配置经 _sanitize_config 过滤"
+    ] }
+  ]
+}

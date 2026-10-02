@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "输入输出与检查点层架构图",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "output": "pregel-io-checkpoint-architecture.html",
+    "viewBox": [1000, 480]
+  },
+  "components": [
+    { "id": "pregel", "type": "external", "label": "Pregel 引擎", "pos": [60, 130], "size": [150, 60] },
+    { "id": "read", "type": "backend", "label": "ChannelRead", "pos": [300, 60], "size": [160, 56] },
+    { "id": "write", "type": "backend", "label": "ChannelWrite", "pos": [300, 160], "size": [160, 56] },
+    { "id": "io", "type": "backend", "label": "_io 映射函数", "pos": [540, 60], "size": [170, 56] },
+    { "id": "createcp", "type": "backend", "label": "create_checkpoint", "pos": [540, 160], "size": [180, 56] },
+    { "id": "hydrate", "type": "backend", "label": "channels_from_checkpoint", "pos": [540, 260], "size": [200, 56] },
+    { "id": "channels", "type": "external", "label": "channels 原语", "pos": [800, 110], "size": [160, 56] },
+    { "id": "saver", "type": "external", "label": "BaseCheckpointSaver", "pos": [800, 280], "size": [180, 56] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "输入输出与检查点层（pregel/_io,_read,_write,_checkpoint）", "wraps": ["read", "write", "io", "createcp", "hydrate"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "pregel", "to": "read", "label": "节点读通道" },
+    { "id": "c2", "from": "pregel", "to": "write", "label": "节点写通道", "variant": "emphasis" },
+    { "id": "c5", "from": "write", "to": "channels", "label": "pending writes 归约" },
+    { "id": "c5b", "from": "read", "to": "channels", "label": "读取通道值" },
+    { "id": "c6", "from": "createcp", "to": "channels", "label": "ch.checkpoint()", "variant": "emphasis" },
+    { "id": "c7", "from": "hydrate", "to": "channels", "label": "from_checkpoint/回放" },
+    { "id": "c8", "from": "createcp", "to": "saver", "label": "提交 blob" },
+    { "id": "c9", "from": "saver", "to": "hydrate", "label": "提供 delta 历史" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "写路径", "items": ["节点返回→ChannelWrite", "→待写(pending writes)", "→通道 update", "→create_checkpoint 落盘"] }
+  ]
+}
